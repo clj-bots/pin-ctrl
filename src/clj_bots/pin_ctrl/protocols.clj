@@ -1,19 +1,27 @@
-(ns clj-bots.pinctrl.protocols)
+(ns clj-bots.pin-ctrl.protocols)
+
+(defprotocol PPinCtrlImplementation
+  "Any implementation the pin-ctrl API must create an object which implements this protocol,
+  and register it using the `clj-bots.pin-ctrl.implementation/register-implementation function."
+  (create-board! [this config])
+  (models [this]))
 
 (defprotocol PBoard
   "Basic board protocol, shared by any board, whether on board or over wire."
   (map-pin [this pinspec]
     "Some devices, such as the Beaglebone black, have non-trivial mappings between convenient
     `[header, pin-number]` pairs to the underlying fs-gpio pins.")
-  (init-board! [this config])
+  (pin-modes [this])
+  (create-pin [this pin-n])
   (get-config [this])
-  (set-config [this]))
+  (set-config! [this config]))
 
+; Need to have a good way of setting default nullary implementations of these
 (defprotocol POverwireBoard
   "Overwire boards are boards that run over the wire, like Arduino boards over Firmata. This
   protocol is for functions specific to these boards."
   (reset-board! [this] "Overwire boards, such as arduino boards over firmata, can be reset!")
-  (send-message! [this message] "Send an arbitrary message to board.")
+  ; Not sure we really need this one to be separate from above
   (get-config! [this] "Load the configuratino settings of the board over the wire directly from the device and cache."))
 
 (defprotocol PPinConfigure
