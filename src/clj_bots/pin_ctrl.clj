@@ -20,10 +20,10 @@
   [board]
   (p/get-config board))
 
-(defn set-config!
+(defn swap-config!
   "Reset board configuration."
-  [board config]
-  (p/set-config! board config))
+  [board f & args]
+  (p/swap-config! board (fn [current-conf] (apply f current-conf args))))
 
 (defn pin-modes
   "Returns a map of pin numbers to possible modes."

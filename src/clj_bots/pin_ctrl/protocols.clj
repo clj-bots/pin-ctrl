@@ -14,7 +14,9 @@
   (pin-modes [this])
   (create-pin [this pin-n])
   (get-config [this])
-  (set-config! [this config]))
+  (swap-config! [this f]
+    "This function should mutate board state in place, since existing pins will need to know the
+    current state of the baord."))
 
 ; Need to have a good way of setting default nullary implementations of these
 (defprotocol POverwireBoard
