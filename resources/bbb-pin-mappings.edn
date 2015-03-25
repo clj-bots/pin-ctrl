@@ -1,0 +1,7 @@
+{:pins [[:P8 11] [:P8 12] [:P8 13]
+        [:P9 1] [:P9 2] [:P9 3]]
+ :pin-modes {[:P8 11] [:gpio]
+             [:P8 12] [:gpio]
+             [:P9 1] [:ain :pwm]}
+ :gpio-mappigns {[:P8 11] 42
+                 [:P8 12] 11}}
