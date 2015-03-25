@@ -10,9 +10,7 @@
 
 (defprotocol PBoard
   "Basic board protocol, shared by any board, whether on board or over wire."
-  (map-pin [this pinspec]
-    "Some devices, such as the Beaglebone black, have non-trivial mappings between convenient
-    `[header, pin-number]` pairs to the underlying fs-gpio pins.")
+  ; XXX Not sure we need this actually; just let the implementation take care of it on it's own
   (pin-modes [this])
   (create-pin [this pin-n])
   (get-config [this])
@@ -24,9 +22,7 @@
 (defprotocol POverwireBoard
   "Overwire boards are boards that run over the wire, like Arduino boards over Firmata. This
   protocol is for functions specific to these boards."
-  (reset-board! [this] "Overwire boards, such as arduino boards over firmata, can be reset!")
-  ; Not sure we really need this one to be separate from above
-  (get-config! [this] "Load the configuratino settings of the board over the wire directly from the device and cache."))
+  (reset-board! [this] "Overwire boards, such as arduino boards over firmata, can be reset!"))
 
 (defprotocol PPinConfigure
   (set-mode! [this mode] "Set the mode of the pin, as long as it's supported by the pin's board."))
