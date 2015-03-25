@@ -4,7 +4,9 @@
   "Any implementation the pin-ctrl API must create an object which implements this protocol,
   and register it using the `clj-bots.pin-ctrl.implementation/register-implementation function."
   (create-board! [this config])
-  (models [this]))
+  (models [this])
+  ; Let's add this so the simulator can effectively mock the configuration of pin availability and what not
+  (default-config [this]))
 
 (defprotocol PBoard
   "Basic board protocol, shared by any board, whether on board or over wire."
