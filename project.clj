@@ -8,7 +8,7 @@
                  ; ## Here are dependencies specific to each of the individual implementations
                  ; rpi dependencies
                  ; bbb dependencies
-                 ; onboard-common dependencies
+                 ; onboard-gpio-common dependencies
                  [clj-gpio "0.1.0-SNAPSHOT"]
                  ; firmata dependencies
                  [clj-firmata "2.0.2-SNAPSHOT"]
