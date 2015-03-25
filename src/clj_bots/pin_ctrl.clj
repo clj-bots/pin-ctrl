@@ -40,8 +40,11 @@
 ;; ## Pin functions
 
 (defn create-pin
-  "Return a new pin object based on a given board"
-  [board pin-n])
-
-
+  "Return a new pin object based on a given board, and optionally set the mode."
+  ([board pin-n]
+   (p/create-pin pin-n))
+  ([board pin-n mode]
+   (let [p (p/create-pin pin-n)]
+     (p/set-mod! p mode)
+     p)))
 
