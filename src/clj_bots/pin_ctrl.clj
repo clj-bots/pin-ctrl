@@ -1,17 +1,17 @@
 (ns clj-bots.pin-ctrl
   "# Public API for pin-ctrl"
-  (:require '[clj-bots.pin-ctrl
-              [protocols :as p]
-              [implementation :as impl]]))
+  (:require [clj-bots.pin-ctrl
+             [protocols :as p]
+             [implementation :as impl]]))
 
 
 ;; ## Board functions
 
-(defn create-board
+(defn create-board!
   "Create a new board instance. For documentation on the available options, see the implementation
   library documentation." ; XXX - let's eventually register documentation for each of the implementations
   ([type]
-   (create-board type config))
+   (create-board! type {}))
   ([type config]
    (impl/instantiate type config)))
 
@@ -42,9 +42,9 @@
 (defn create-pin!
   "Return a new pin object based on a given board, and optionally set the mode."
   ([board pin-n]
-   (p/create-pin pin-n))
+   (p/create-pin board pin-n))
   ([board pin-n mode]
-   (let [p (p/create-pin pin-n)]
+   (let [p (p/create-pin board pin-n)]
      (p/set-mode! p mode)
      p)))
 
