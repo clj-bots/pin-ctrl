@@ -39,12 +39,31 @@
 
 ;; ## Pin functions
 
-(defn create-pin
+(defn create-pin!
   "Return a new pin object based on a given board, and optionally set the mode."
   ([board pin-n]
    (p/create-pin pin-n))
   ([board pin-n mode]
    (let [p (p/create-pin pin-n)]
-     (p/set-mod! p mode)
+     (p/set-mode! p mode)
      p)))
+
+(defn set-mode!
+  "Set the mode of the pin. Must be a value supported by the pin."
+  [pin mode]
+  (p/set-mode! pin mode))
+
+(defn read-value
+  "Read a single value from the pin. If `:raw true` is passed, reads a raw value from an analog pin
+  instead of a relative value between 0 and 1."
+  [pin & {:keys [raw]}]
+  (if raw
+    (p/read-raw-value pin)
+    (p/read-value pin)))
+
+(defn write-value!
+  "Write a value to a writable pin. The kind of value supported and what it means is entirely dependent on
+  what kind of pin is being used."
+  [pin val]
+  (p/write-value! pin val))
 

@@ -28,7 +28,10 @@
   (set-mode! [this mode] "Set the mode of the pin, as long as it's supported by the pin's board."))
 
 (defprotocol PReadablePin
-  (read-value [this] "Read the binary or analog value of a pin."))
+  (read-value [this] "Read the binary or analog value of a pin. For analog input values this should be a normalized value between 0 and 1"))
+
+(defprotocol PAinPin
+  (read-raw-value [this] "Read the raw analog value of a pin. Maximum value depends on the number of bits ADC."))
 
 (defprotocol PWriteablePin
   (write-value! [this val] "Set the value binary or analog value of a pin."))
