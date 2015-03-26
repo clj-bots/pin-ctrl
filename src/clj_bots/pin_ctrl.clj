@@ -67,3 +67,22 @@
   [pin val]
   (p/write-value! pin val))
 
+;; ### Edge detection functionality
+
+(defn set-edge!
+  "Set the edge direction of a pin. Accepts `:falling`, `:rising` and `:both`."
+  [pin edge]
+  (p/set-edge! pin edge))
+
+(defn create-edge-channel
+  "Return a channel on which events will be published."
+  ([pin]
+   (p/create-edge-channel pin 1))
+  ([pin buffer]
+   (p/create-edge-channel pin buffer)))
+
+(defn release-edge-channels!
+  "Release the edge channel, closing all channels tap channels that have been created."
+  [pin]
+  (p/release-edge-channels! pin))
+

@@ -38,7 +38,7 @@
 
 (defprotocol PEdgeDetectablePin
   (set-edge! [this edge] "Set the edge of the pin (:rising, :falling, :both).")
-  (create-edge-channel [this] "Return a channel to be fed edge detection messages.")
-  (release-edge-channel! [this] "Release the edge channel."))
+  (create-edge-channel [this buffer] "Return a channel to be fed edge detection messages.")
+  (release-edge-channels! [this] "Release (close) all edge channels on this pin."))
 
 
