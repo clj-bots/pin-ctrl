@@ -1,4 +1,5 @@
 (ns clj-bots.hello-world.blink
+  "# The hello world of hardware programming: a blinking LED"
   (:require [clj-bots.pin-ctrl :as pc]
             [clj-bots.pin-ctrl-bbb :as bbb]))
 
