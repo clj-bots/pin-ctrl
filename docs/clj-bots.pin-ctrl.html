@@ -2918,7 +2918,16 @@ net.brehaut.ClojureTools = (function (SH) {
   what kind of pin is being used.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn write-value!
   ([pin val] (board-apply p/write-value! pin val))
-  ([board pin-n val] (p/write-value! board pin-n val)))</pre></td></tr><tr><td class="docs"><h3>Edge detection functionality</h3>
+  ([board pin-n val] (p/write-value! board pin-n val)))</pre></td></tr><tr><td class="docs"><p>Toggle a GPIO pin between high and low.</p>
+
+<p>XXX Should we try to worry about race conditions here? Could make this lower level so read/write messages
+don't have anything inbetween interfere.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn toggle!
+  ([pin] (board-apply pin toggle!))
+  ([board pin-n]
+   (let [current-val (read-value board pin-n)
+         new-val (if (= current-val :low) :high :low)]
+     (write-value! board pin-n new-val))))</pre></td></tr><tr><td class="docs"><h3>Edge detection functionality</h3>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Set the edge direction of a pin. Accepts <code>:falling</code>, <code>:rising</code> and <code>:both</code>.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn set-edge!
   ([pin edge] (board-apply p/set-edge! pin edge))
