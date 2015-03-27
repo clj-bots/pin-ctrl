@@ -80,6 +80,16 @@
   ([pin val] (board-apply p/write-value! pin val))
   ([board pin-n val] (p/write-value! board pin-n val)))
 
+;; XXX Should we try to worry about race conditions here? Could make this lower level so read/write messages
+;; don't have anything inbetween interfere.
+(defn toggle!
+  "Toggle a GPIO pin between high and low."
+  ([pin] (board-apply pin toggle!))
+  ([board pin-n]
+   (let [current-val (read-value board pin-n)
+         new-val (if (= current-val :low) :high :low)]
+     (write-value! board pin-n new-val))))
+
 ;; ### Edge detection functionality
 
 (defn set-edge!
