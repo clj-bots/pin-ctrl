@@ -52,7 +52,7 @@
       (recur))))
 
 (Thread/sleep 10000)
-(future-cancel blink-thread)
+(future-cancel blink-thread2)
 (pc/set-mode! board [:P8 14] :off)
 
 
