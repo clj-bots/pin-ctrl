@@ -61,41 +61,31 @@
 
 (defn set-mode!
   "Set the mode of the pin. Must be a value supported by the pin."
-  ([pin mode]
-   (board-apply p/set-mode! pin mode))
-  ([board pin-n mode]
-   (p/set-mode! board pin-n mode)))
+  ([pin mode] (board-apply p/set-mode! pin mode))
+  ([board pin-n mode] (p/set-mode! board pin-n mode)))
 
 (defn read-value
   "Read a single value from the pin. If an analog input, returns a value between 0 and 1."
-  ([pin]
-   (board-apply p/read-value pin))
-  ([board pin-n]
-   (p/read-value board pin-n)))
+  ([pin] (board-apply p/read-value pin))
+  ([board pin-n] (p/read-value board pin-n)))
 
 (defn read-raw-value
   "Read a raw unprocessed value from an analog input pin."
-  ([pin]
-   (board-apply p/read-raw-value pin))
-  ([board pin-n]
-   (p/read-raw-value board pin-n)))
+  ([pin] (board-apply p/read-raw-value pin))
+  ([board pin-n] (p/read-raw-value board pin-n)))
 
 (defn write-value!
   "Write a value to a writable pin. The kind of value supported and what it means is entirely dependent on
   what kind of pin is being used."
-  ([pin val]
-   (board-apply p/write-value! pin val))
-  ([board pin-n val]
-   (p/write-value! board pin-n val)))
+  ([pin val] (board-apply p/write-value! pin val))
+  ([board pin-n val] (p/write-value! board pin-n val)))
 
 ;; ### Edge detection functionality
 
 (defn set-edge!
   "Set the edge direction of a pin. Accepts `:falling`, `:rising` and `:both`."
-  ([pin edge]
-   (board-apply p/set-edge! pin edge))
-  ([board pin-n edge]
-   (p/set-edge! board pin-n edge)))
+  ([pin edge] (board-apply p/set-edge! pin edge))
+  ([board pin-n edge] (p/set-edge! board pin-n edge)))
 
 (defmulti create-edge-channel
   "Return a channel on which events will be published. Buffer defaults to 1:
