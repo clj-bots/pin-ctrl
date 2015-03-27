@@ -32,8 +32,27 @@
       (Thread/sleep 1000)
       (recur))))
 
-;; Yay! Let's bask in the glory for a few seconds and then quit
+;; Yay! Let's bask in the glory for a few seconds and then turn the pin off
 
 (Thread/sleep 10000)
 (future-cancel blink-thread)
+(pc/set-mode! pin :off)
+
+;; It's also possible to use the board to control pins directly. In fact, the functions which operate on the
+;; Pin objects are actually just thin wrappers around the board object. This makes state management a lot
+;; cleaner.
+
+(pc/set-mode! board [:P8 14] :gpio)
+
+(def blink-thread2
+  (future
+    (loop []
+      (pc/toggle board [:P8 14])
+      (Thread/sleep 1000)
+      (recur))))
+
+(Thread/sleep 10000)
+(future-cancel blink-thread2)
+(pc/set-mode! board [:P8 14] :off)
+
 
