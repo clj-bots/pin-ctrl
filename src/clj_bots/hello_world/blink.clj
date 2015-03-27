@@ -1,4 +1,4 @@
-(ns clj-bots.hello-world.core
+(ns clj-bots.hello-world.blink
   (:require [clj-bots.pin-ctrl :as pc]
             [clj-bots.pin-ctrl-bbb :as bbb]))
 
