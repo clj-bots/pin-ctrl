@@ -12,7 +12,6 @@
   "Basic board protocol, shared by any board, whether on board or over wire."
   ; XXX Not sure we need this actually; just let the implementation take care of it on it's own
   (pin-modes [this])
-  (create-pin [this pin-n])
   (get-config [this])
   (swap-config! [this f]
     "This function should mutate board state in place, since existing pins will need to know the
@@ -25,20 +24,20 @@
   (reset-board! [this] "Overwire boards, such as arduino boards over firmata, can be reset!"))
 
 (defprotocol PPinConfigure
-  (set-mode! [this mode] "Set the mode of the pin, as long as it's supported by the pin's board."))
+  (set-mode! [board pin-n mode] "Set the mode of the pin, as long as it's supported by the pin's board."))
 
 (defprotocol PReadablePin
-  (read-value [this] "Read the binary or analog value of a pin. For analog input values this should be a normalized value between 0 and 1"))
+  (read-value [board pin-n] "Read the binary or analog value of a pin. For analog input values this should be a normalized value between 0 and 1"))
 
 (defprotocol PAinPin
-  (read-raw-value [this] "Read the raw analog value of a pin. Maximum value depends on the number of bits ADC."))
+  (read-raw-value [board pin-n] "Read the raw analog value of a pin. Maximum value depends on the number of bits ADC."))
 
 (defprotocol PWriteablePin
-  (write-value! [this val] "Set the value binary or analog value of a pin."))
+  (write-value! [board pin-n val] "Set the value binary or analog value of a pin."))
 
 (defprotocol PEdgeDetectablePin
-  (set-edge! [this edge] "Set the edge of the pin (:rising, :falling, :both).")
-  (create-edge-channel [this buffer] "Return a channel to be fed edge detection messages.")
-  (release-edge-channels! [this] "Release (close) all edge channels on this pin."))
+  (set-edge! [board pin-n edge] "Set the edge of the pin (:rising, :falling, :both).")
+  (create-edge-channel [board pin-n buffer] "Return a channel to be fed edge detection messages.")
+  (release-edge-channels! [board pin-n] "Release (close) all edge channels on this pin."))
 
 
