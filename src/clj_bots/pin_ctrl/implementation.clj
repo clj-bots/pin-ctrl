@@ -12,7 +12,7 @@
 (defn instantiate
   [board-type config]
   (if-let [implementation (get @implementations board-type)]
-    (p/create-board! implementation config)
+    (p/create-board implementation config)
     (throw+ {:type ::missing-implementation
              :board-type board-type
              :message (str "No implementation for board type: " board-type ". "

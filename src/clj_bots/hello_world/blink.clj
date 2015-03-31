@@ -13,7 +13,7 @@
 
 ;; Next we create a board object. This could be in a var, as we're doing here, or we could use something like
 ;; Component to manage its lifecycle.
-(def board (pc/create-board! :bbb))
+(def board (pc/create-board :bbb))
 
 ;; Now let's say we want to initialize pin 14 on header :P8 as a GPIO pin, and use it to control an LED that we'll blink.
 ;; (We _could_ actually do this as `:P8_14` instead of `[:P8 14]`, but my thought is that the latter is a bit

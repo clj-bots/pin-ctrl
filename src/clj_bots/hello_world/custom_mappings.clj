@@ -27,7 +27,7 @@
 ;; This should be either `:bbb` or `:rpi`
 
 ;; Now we can create the board with this configuration.
-(def board (create-board! board-type (config board-type)))
+(def board (create-board board-type (config board-type)))
 
 ;; Now that we've loaded our board with custom mappings, blinking the correct LED is agnostic to the
 ;; underlying board.

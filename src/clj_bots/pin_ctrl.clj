@@ -7,11 +7,19 @@
 
 ;; ## Board functions
 
-(defn create-board!
+(defn- board?
+  [obj]
+  (satisfies? p/PBoard obj))
+
+(defn- board-apply
+  [f pin & args]
+  (apply f (:board pin) (:pin-n pin) args))
+
+(defn create-board
   "Create a new board instance. For documentation on the available options, see the implementation
   library documentation." ; XXX - let's eventually register documentation for each of the implementations
   ([type]
-   (create-board! type {}))
+   (create-board type {}))
   ([type config]
    (impl/instantiate type config)))
 
@@ -20,17 +28,25 @@
   [board]
   (p/get-config board))
 
-(defn swap-config!
+(defn update-config
   "Reset board configuration."
   [board f & args]
-  (p/swap-config! board (fn [current-conf] (apply f current-conf args))))
+  (p/update-config board (fn [current-conf] (apply f current-conf args))))
 
 (defn pin-modes
-  "Returns a map of pin numbers to possible modes."
+  "Returns a map of pin numbers to possible modes for the entire board, or the available modes of a specific pin."
+  ; Should add second 1-arity that checks for 
   ([board]
    (p/pin-modes board))
   ([board pin]
    (get (pin-modes board) pin)))
+
+(defn current-pin-modes
+  "Returns a map of pin numbers to possible modes."
+  ([board]
+   (p/current-pin-modes board))
+  ([board pin]
+   (get (current-pin-modes board) pin)))
 
 (defn set-default-board!
   "Set the default board implementation"
@@ -41,15 +57,6 @@
 
 (defrecord Pin
   [board pin-n])
-
-(defn- board?
-  [obj]
-  (satisfies? p/PBoard obj))
-
-(defn- board-apply
-  [f pin & args]
-  (apply f (:board pin) (:pin-n pin) args))
-
 
 (defn get-pin
   "Return a new pin object based on a given board, and optionally set the mode."

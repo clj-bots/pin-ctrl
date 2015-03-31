@@ -13,12 +13,10 @@
   pcp/PBoard
   (pin-modes [_]
     {:todo :XXX})
-  (create-pin [this pin-n]
-    (new-pin this pin-n))
   (get-config [this]
     config)
   ; XXX - Hmmm... do we actually need this?
-  (swap-config! [this f]
+  (update-config [this f]
     (swap! config f)))
 
 
@@ -48,7 +46,7 @@
     (toString [_]
       "<BeagleBoneBlackImplementation>")
     pcp/PPinCtrlImplementation
-    (create-board! [_ config]
+    (create-board [_ config]
       (Board. (get-pin-mappings) config))
     (default-config [_]
       (get-pin-mappings))))
