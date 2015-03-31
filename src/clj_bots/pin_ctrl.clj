@@ -97,7 +97,7 @@
          new-val (if (= current-val :low) :high :low)]
      (write-value! board pin-n new-val))))
 
-;; ### Edge detection functionality
+;; ## Edge detection functionality
 
 (defn set-edge!
   "Set the edge direction of a pin. Accepts `:falling`, `:rising` and `:both`."
