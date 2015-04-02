@@ -25,6 +25,11 @@
 
 (declare current-pin-mode writeable-pin? ok-val?)
 
+(defprotocol PSimControl
+  "Protocol for simulation control functions"
+  (set-state! [this pin-n val] "Set the state of a digital or analog input pin"))
+
+
 (defrecord SimBoard
   [pin-state pin-modes edge-channels config]
   pcp/PBoard
@@ -82,7 +87,14 @@
                      (when (match new-val)
                        (>!! c new-val))))))))
   (get-edge-mult [board pin-n]
-    (second (get @edge-channels pin-n))))
+    (second (get @edge-channels pin-n)))
+
+  PSimControl
+  (set-state! [board pin-n val]
+    (assert (ok-val? board pin-n val)
+            (str "The value " val " is not an acceptable value for pins of type " (current-pin-mode board pin-n)))
+    (swap! pin-state pin-n val)))
+
 
 (defmethod read-pin* :input
   [board pin-n]
