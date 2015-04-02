@@ -4,6 +4,9 @@
              [implementation :as impl]]
             [clojure.core.async :as async :refer [chan >!! <!! go <! >! go-loop]]))
 
+
+;; This stuff really needs to be part of the core library
+
 (def full-available-modes
   #{:input :output :input-rising :input-falling :input-both :ain :aout :pwm})
 
@@ -16,19 +19,28 @@
    :aout [:aout]
    :pwm  [:pwm]})
 
-(declare current-pin-modes)
+
+;; Here we're going to declare some of the things we'll need in the implementation that we'd rather leave at
+;; the end of this namespace for logical flow.
+
+(declare current-pin-modes current-pin-mode writeable-pin? ok-val?)
 
 (defmulti read-pin*
   "Inner method for reading from a pin; dispatches on pin mode"
   (fn [board pin-n]
     (get (current-pin-modes board) pin-n)))
 
-(declare current-pin-mode writeable-pin? ok-val?)
+
+;; In addition to the standard protocol functions, we also need something which let's us set the state of
+;; _input_ input pins for the purposes of simulation, since (for obvious reasons) this is not supported via
+;; the standard protocols.
 
 (defprotocol PSimControl
   "Protocol for simulation control functions"
   (set-state! [this pin-n val] "Set the state of a digital or analog input pin"))
 
+
+;; And now the implementation.
 
 (defrecord SimBoard
   [pin-state pin-modes edge-channels config]
@@ -95,6 +107,7 @@
             (str "The value " val " is not an acceptable value for pins of type " (current-pin-mode board pin-n)))
     (swap! pin-state pin-n val)))
 
+;; Now we'll flesh out some of the various reading/writing functions
 
 (defmethod read-pin* :input
   [board pin-n]
@@ -132,6 +145,9 @@
                    (< (Math/pow 2 (get-bits board pin-n)))))
     false))
 
+
+;; How we create new boards
+
 (defn sim-board
   [config]
   (SimBoard.
@@ -150,6 +166,9 @@
               (fn [_] (> (rand) 0.68))
               available-modes)]))})
 
+
+;; And register the implementation
+
 (def implementation
   (reify
     Object
@@ -160,5 +179,7 @@
       (sim-board config))
     (default-config [_]
       (pcp/default-config 100))))
+
+(impl/register-implementation :simulation implementation)
 
 
