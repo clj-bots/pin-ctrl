@@ -6,11 +6,30 @@
             [clojure.core.async :as async :refer [>!! <!! >! <! go go-loop chan]]))
 
 
+;; The philosophy behind pin-ctrl is that physical computing shouldn't require different API's for different
+;; devices.
+;; A set of routines involving monitoring inputs, and controlling outputs should be independent of what device
+;; it runs on, within the bounds of the capabilities and features of those devices.
+;;
+;; For this reason, pin-ctrl aims to establish itself as a common device programming API, with multiple
+;; implementations available for different devices.
+;; These implementations are separate libraries depending on the core pin-ctrl library which implement the
+;; underlying protocols.
+
+
 ;; ## Board functions
+;;
+;; The starting point for this library is the `board` abstraction.
+;; Board objects carry with them information about what pins are available, what modes are available for those
+;; pins, and the current mode settings for those pins.
 
 
 (declare board? board-dispatch board-apply)
 
+;; We start by creating board objects with the `create-board` function, which returns a board object based
+;; on the specified `board-type`, which points towards the implementation key for the device being used (e.g.
+;; `:rpi`, `:bbb`, `:firmata`, etc.).
+;; The full set of configuration options will be detailed elsewhere soon XXX.
 
 (defn create-board
   "Create a new board instance. For documentation on the available options, see the implementation
@@ -19,6 +38,8 @@
    (create-board type {}))
   ([type config]
    (impl/instantiate type config)))
+
+;; What follows then are a suite of simple tools for dealing with the boards.
 
 (defn get-config
   "Get board configuration."
@@ -53,6 +74,16 @@
 
 ;; ## Pin functions
 
+;; The following functions are provided for controlling and monitoring pin states.
+
+;; In addition to the board abstraction, we offer the Pin abstraction for dealing with the control and state
+;; of individual pins.
+;; This abstraction is "thin", in that it is really just a reference to a board and pin number.
+;; In the functions that follow, you will see that the pin control/access functions can typically operate
+;; either directly on the board given a `pin-n`, or on a pin abstraction.
+;; Whether you use the pin abstraction or the board objects directly is up to you.
+
+
 (defrecord Pin
   [board pin-n])
 
@@ -64,10 +95,16 @@
    (p/set-mode! board pin-n mode)
    (Pin. board pin-n)))
 
+;; Many pins have multiple available modes.
+;; This function lets us switch between modes, when possible, and activate modes that are not activated by
+;; default, such as GPIO pins.
+
 (defn set-mode!
   "Set the mode of the pin. Must be a value supported by the pin."
   ([pin mode] (board-apply p/set-mode! pin mode))
   ([board pin-n mode] (p/set-mode! board pin-n mode)))
+
+;; Next we have our reader functions.
 
 (defn read-value
   "Read a single value from the pin. If an analog input, returns a value between 0 and 1."
@@ -78,6 +115,8 @@
   "Read a raw unprocessed value from an analog input pin."
   ([pin] (board-apply p/read-raw-value pin))
   ([board pin-n] (p/read-raw-value board pin-n)))
+
+;; And last but not least, control functions:
 
 (defn write-value!
   "Write a value to a writable pin. The kind of value supported and what it means is entirely dependent on
@@ -96,6 +135,16 @@
      (write-value! board pin-n new-val))))
 
 ;; ## Edge detection functionality
+;;
+;; Certain applications, such as monitoring of a button push or other input trigger, require consistent
+;; monitoring of a pin value.
+;; The naive approach here can be quite inefficient.
+;; Fortunately, GPIO pins typically support edge detection functionality, which allows the system to
+;; efficiently monitor for changes in pin state, and send those changes as interrupts within the program.
+;;
+;; This library exposes these interrupts -- naturally -- via core.async channels.
+;; The usage pattern involves first setting the edge detection mode of the pin, then tapping into a central
+;; channel and using that tap to convey messages of state changes throughout the app.
 
 (defmulti set-edge!
   "Set the edge direction of a pin. Accepts `:falling`, `:rising`, `:both` and `:none` edges.
