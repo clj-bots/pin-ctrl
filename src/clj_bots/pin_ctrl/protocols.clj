@@ -11,8 +11,6 @@
 ;; There is still some question about whether or not we should similarly keep track of config state.
 ;; This could be left up to the user, or could be handled in a similar manner to the mode state.
 
-;; * + current-pin-modes
-
 ;; Notes on the configuration schema:
 ;;
 ;; * AIN (out?): Must have number of bits to translate raw to normalized
@@ -53,8 +51,6 @@
   "Edge detection allows efficient detection of GPIO state changes (such as from a button press).
   These changes are exposed to the user via `core.async` channels, which can be created via this
   protocol. Configuration is done via set-mode!"
-  (set-edge! [board pin-n edge] "Set the direction of the edge detection on a GPIO pin")
-  (create-edge-channel [board pin-n buffer] "Return a channel to be fed edge detection messages.")
-  (release-edge-channels! [board pin-n] "Release (close) all edge channels on this pin."))
-
+  (set-edge! [board pin-n edge buffer] "Set the direction of the edge detection on a GPIO pin. Should return a channel mult available for tapping. Setting edge to none should close the chan.")
+  (get-edge-mult [board pin-n] "Return the edge channel mult created by `set-edge!`"))
 

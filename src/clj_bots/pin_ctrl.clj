@@ -2,18 +2,15 @@
   "# Public API for pin-ctrl"
   (:require [clj-bots.pin-ctrl
              [protocols :as p]
-             [implementation :as impl]]))
+             [implementation :as impl]]
+            [clojure.core.async :as async :refer [>!! <!! >! <! go go-loop chan]]))
 
 
 ;; ## Board functions
 
-(defn- board?
-  [obj]
-  (satisfies? p/PBoard obj))
 
-(defn- board-apply
-  [f pin & args]
-  (apply f (:board pin) (:pin-n pin) args))
+(declare board? board-dispatch board-apply)
+
 
 (defn create-board
   "Create a new board instance. For documentation on the available options, see the implementation
@@ -50,7 +47,8 @@
 
 (defn set-default-board!
   "Set the default board implementation"
-  [board])
+  [board]
+  (println "Not yet implemented"))
 
 
 ;; ## Pin functions
@@ -99,26 +97,53 @@
 
 ;; ## Edge detection functionality
 
-(defn set-edge!
-  "Set the edge direction of a pin. Accepts `:falling`, `:rising` and `:both`."
-  ([pin edge] (board-apply p/set-edge! pin edge))
-  ([board pin-n edge] (p/set-edge! board pin-n edge)))
+(defmulti set-edge!
+  "Set the edge direction of a pin. Accepts `:falling`, `:rising`, `:both` and `:none` edges.
+  Args should either be `[pin edge & [buffer]]` or `[board pin-n edge & [buffer]]`, where buffer is the size of
+  the channel which will be tapped in the tapping functions (defaults to 1)."
+  board-dispatch)
 
-(defmulti create-edge-channel
-  "Return a channel on which events will be published. Buffer defaults to 1:
-  `([board pin-n & [buffer]] [pin & [buffer]])`"
-  (fn [& args] (board? (first args))))
+(defmethod set-edge! true
+  [board pin-n edge & [buffer]]
+  (p/set-edge! board pin-n edge (or buffer 1)))
 
-(defmethod create-edge-channel false
-  [pin & [buffer]]
-  (board-apply p/create-edge-channel pin (or buffer 1)))
+(defmethod set-edge! false
+  [pin edge & [buffer]]
+  (board-apply p/set-edge! pin edge (or buffer 1)))
 
-(defmethod create-edge-channel true
+(defmulti create-edge-tap!
+  "Create an edge tap for the given edge channel"
+  board-dispatch)
+
+(defmethod create-edge-tap! true
   [board pin-n & [buffer]]
-  (p/create-edge-channel board pin-n (or buffer 1)))
+  (async/tap (p/get-edge-mult board pin-n) (chan (or buffer 1))))
 
-(defn release-edge-channels!
-  "Release the edge channel, closing all channels tap channels that have been created."
-  ([pin] (board-apply p/release-edge-channels! pin))
-  ([board pin-n] (p/release-edge-channels! board pin-n)))
+(defmethod create-edge-tap! false
+  [pin [buffer]]
+  (board-apply create-edge-tap! pin buffer))
+
+(defn remove-edge-tap!
+  "Untap edge channel tap"
+  ([board pin-n tap-chan]
+   (async/untap (p/get-edge-mult board pin-n) tap-chan))
+  ([pin tap-chan]
+   (board-apply remove-edge-tap! pin tap-chan)))
+
+
+;; ### Some helper functions for navigating through boards and pins.
+
+;; Nothing to see here...
+
+(defn- board?
+  [obj]
+  (satisfies? p/PBoard obj))
+
+(defn- board-dispatch
+  [x & args] (board? x))
+
+(defn- board-apply
+  [f pin & args]
+  (apply f (:board pin) (:pin-n pin) args))
+
 
