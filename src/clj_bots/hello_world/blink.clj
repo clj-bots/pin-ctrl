@@ -25,7 +25,7 @@
 (def blink-thread
   (future
     (loop []
-      (pc/toggle pin)
+      (pc/toggle! pin)
       (Thread/sleep 1000)
       (recur))))
 
@@ -42,7 +42,7 @@
 (def blink-thread2
   (future
     (loop []
-      (pc/toggle board [:P8 14])
+      (pc/toggle! board [:P8 14])
       (Thread/sleep 1000)
       (recur))))
 
