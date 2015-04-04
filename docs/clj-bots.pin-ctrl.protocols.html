@@ -2865,21 +2865,31 @@ net.brehaut.ClojureTools = (function (SH) {
     build_tree: build_tree
   };
 })(SyntaxHighlighter);
-</script><title>clj-bots/pin-ctrl -- Marginalia</title></head><body><table><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#clj-bots.pin-ctrl.protocols" name="clj-bots.pin-ctrl.protocols"><h1 class="project-name">clj-bots.pin-ctrl.protocols</h1><a class="toc-link" href="toc.html">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(ns clj-bots.pin-ctrl.protocols)</pre></td></tr><tr><td class="docs"><p>Any implementation the pin-ctrl API must create an object which implements this protocol,
+</script><title>clj-bots/pin-ctrl -- Marginalia</title></head><body><table><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#clj-bots.pin-ctrl.protocols" name="clj-bots.pin-ctrl.protocols"><h1 class="project-name">clj-bots.pin-ctrl.protocols</h1><a class="toc-link" href="toc.html">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><h1>Implementation protocols</h1>
+</td><td class="codes"><pre class="brush: clojure">(ns clj-bots.pin-ctrl.protocols)</pre></td></tr><tr><td class="docs"><p>This namespace contains the protocols which a pin-ctrl implementation must satisy.
+In particular, it must provide a single object satisfying the <code>PPinCtrlImplementation</code> protocol, and that
+must have a <code>create-board</code> method which returns an object satisfying the remaining protocols.</p>
+
+<p>The objects satisfying these protocols must keep track of mode setting state, and in particular need to do
+this so that they can know what underlying methods/functions they need to call in order to execute
+writes/reads.
+There is still some question about whether or not we should similarly keep track of config state.
+This could be left up to the user, or could be handled in a similar manner to the mode state.</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Notes on the configuration schema:</p>
+
+<ul>
+<li>AIN (out?): Must have number of bits to translate raw to normalized</li>
+</ul>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Any implementation the pin-ctrl API must create an object which implements this protocol,
   and register it using the `clj-bots.pin-ctrl.implementation/register-implementation function.</p>
 </td><td class="codes"><pre class="brush: clojure">(defprotocol PPinCtrlImplementation
-  (create-board! [this config])
-  (models [this])
-  ; Let's add this so the simulator can effectively mock the configuration of pin availability and what not
-  (default-config [this]))</pre></td></tr><tr><td class="docs"><p>Basic board protocol, shared by any board, whether on board or over wire.</p>
+  (create-board [this config] &quot;Return a new board instance of this implementation.&quot;)
+  (default-config [this] &quot;Return the default configuration map (see schema XXX) for this implementation. This is useful for simulation.&quot;))</pre></td></tr><tr><td class="docs"><p>Basic board protocol, shared by any board, whether on board or over wire.</p>
 </td><td class="codes"><pre class="brush: clojure">(defprotocol PBoard
-  ; XXX Not sure we need this actually; just let the implementation take care of it on it's own
-  (pin-modes [this])
-  (get-config [this])
-  (swap-config! [this f]
-    &quot;This function should mutate board state in place, since existing pins will need to know the
-    current state of the baord.&quot;))</pre></td></tr><tr><td class="docs"><p>Overwire boards are boards that run over the wire, like Arduino boards over Firmata. This
+  (pin-modes [this] &quot;Return a map of pin numbers to available pin modes.&quot;)
+  (current-pin-modes [this] &quot;Get the current pin mode values.&quot;)
+  (get-config [this] &quot;Return the configuration map of the board. For the schema see XXX.&quot;)
+  (update-config [this f] &quot;Run the given function on the existing configuration, and return a new board object with the resulting configuration.&quot;))</pre></td></tr><tr><td class="docs"><p>Overwire boards are boards that run over the wire, like Arduino boards over Firmata. This
   protocol is for functions specific to these boards.</p>
 </td><td class="codes"><pre class="brush: clojure">(defprotocol POverwireBoard
   (reset-board! [this] &quot;Overwire boards, such as arduino boards over firmata, can be reset!&quot;))</pre></td></tr><tr><td class="docs">
@@ -2890,11 +2900,12 @@ net.brehaut.ClojureTools = (function (SH) {
 </td><td class="codes"><pre class="brush: clojure">(defprotocol PAinPin
   (read-raw-value [board pin-n] &quot;Read the raw analog value of a pin. Maximum value depends on the number of bits ADC.&quot;))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defprotocol PWriteablePin
-  (write-value! [board pin-n val] &quot;Set the value binary or analog value of a pin.&quot;))</pre></td></tr><tr><td class="docs">
+  (write-value! [board pin-n val] &quot;Set the binary or analog value of a pin.&quot;))</pre></td></tr><tr><td class="docs"><p>Edge detection allows efficient detection of GPIO state changes (such as from a button press).
+  These changes are exposed to the user via <code>core.async</code> channels, which can be created via this
+  protocol. Configuration is done via set-mode!</p>
 </td><td class="codes"><pre class="brush: clojure">(defprotocol PEdgeDetectablePin
-  (set-edge! [board pin-n edge] &quot;Set the edge of the pin (:rising, :falling, :both).&quot;)
-  (create-edge-channel [board pin-n buffer] &quot;Return a channel to be fed edge detection messages.&quot;)
-  (release-edge-channels! [board pin-n] &quot;Release (close) all edge channels on this pin.&quot;))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
+  (set-edge! [board pin-n edge buffer] &quot;Set the direction of the edge detection on a GPIO pin. Should return a channel mult available for tapping. Setting edge to none should close the chan.&quot;)
+  (get-edge-mult [board pin-n] &quot;Return the edge channel mult created by `set-edge!`&quot;))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
 SyntaxHighlighter.all();
 
 // hackity hack

@@ -2877,7 +2877,7 @@ net.brehaut.ClojureTools = (function (SH) {
 </td><td class="codes"><pre class="brush: clojure">(defn instantiate
   [board-type config]
   (if-let [implementation (get @implementations board-type)]
-    (p/create-board! implementation config)
+    (p/create-board implementation config)
     (throw+ {:type ::missing-implementation
              :board-type board-type
              :message (str &quot;No implementation for board type: &quot; board-type &quot;. &quot;

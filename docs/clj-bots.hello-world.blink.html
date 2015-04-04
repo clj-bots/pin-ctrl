@@ -2875,7 +2875,7 @@ like <code>(set-default-implementation! :vectorz)</code> without requiring or an
 needs we need to maintain a similar collection of known implementations.)</p>
 </td><td class="codes"><pre class="brush: clojure">(bbb/register-implementation)</pre></td></tr><tr><td class="docs"><p>Next we create a board object. This could be in a var, as we're doing here, or we could use something like
 Component to manage its lifecycle.</p>
-</td><td class="codes"><pre class="brush: clojure">(def board (pc/create-board! :bbb))</pre></td></tr><tr><td class="docs"><p>Now let's say we want to initialize pin 14 on header :P8 as a GPIO pin, and use it to control an LED that we'll blink.
+</td><td class="codes"><pre class="brush: clojure">(def board (pc/create-board :bbb))</pre></td></tr><tr><td class="docs"><p>Now let's say we want to initialize pin 14 on header :P8 as a GPIO pin, and use it to control an LED that we'll blink.
 (We <em>could</em> actually do this as <code>:P8_14</code> instead of <code>[:P8 14]</code>, but my thought is that the latter is a bit
 more composable.).</p>
 </td><td class="codes"><pre class="brush: clojure">(def pin (pc/get-pin board [:P8 14]))
@@ -2883,7 +2883,7 @@ more composable.).</p>
 </td><td class="codes"><pre class="brush: clojure">(def blink-thread
   (future
     (loop []
-      (pc/toggle pin)
+      (pc/toggle! pin)
       (Thread/sleep 1000)
       (recur))))</pre></td></tr><tr><td class="docs"><p>Yay! Let's bask in the glory for a few seconds and then turn the pin off</p>
 </td><td class="codes"><pre class="brush: clojure">(Thread/sleep 10000)
@@ -2895,7 +2895,7 @@ cleaner.</p>
 </td><td class="codes"><pre class="brush: clojure">(def blink-thread2
   (future
     (loop []
-      (pc/toggle board [:P8 14])
+      (pc/toggle! board [:P8 14])
       (Thread/sleep 1000)
       (recur))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(Thread/sleep 10000)
