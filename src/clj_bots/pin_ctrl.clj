@@ -128,7 +128,7 @@
 ;; don't have anything inbetween interfere.
 (defn toggle!
   "Toggle a GPIO pin between high and low."
-  ([pin] (board-apply pin toggle!))
+  ([pin] (board-apply toggle! pin))
   ([board pin-n]
    (let [current-val (read-value board pin-n)
          new-val (if (= current-val :low) :high :low)]

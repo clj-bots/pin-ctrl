@@ -19,16 +19,26 @@
    :aout [:aout]
    :pwm  [:pwm]})
 
+(def cannonical-value
+  {:high  :high
+   "high" :high
+   1      :high
+   \1     :high
+   :low   :low
+   "low"  :low
+   0      :low
+   \0     :low})
+
 
 ;; Here we're going to declare some of the things we'll need in the implementation that we'd rather leave at
 ;; the end of this namespace for logical flow.
 
-(declare current-pin-modes current-pin-mode writeable-pin? ok-val?)
+(declare current-pin-mode writeable-pin? ok-val?)
 
 (defmulti read-pin*
   "Inner method for reading from a pin; dispatches on pin mode"
   (fn [board pin-n]
-    (get (current-pin-modes board) pin-n)))
+    (get (pcp/current-pin-modes board) pin-n)))
 
 
 ;; In addition to the standard protocol functions, we also need something which let's us set the state of
@@ -77,7 +87,8 @@
             (str "Pins of mode " (current-pin-mode board pin-n) " are not writeable"))
     (assert (ok-val? board pin-n val)
             (str "The value " val " is not an acceptable value for pins of type " (current-pin-mode board pin-n)))
-    (swap! pin-state pin-n val))
+    (let [canon-val (cannonical-value val)]
+      (swap! pin-state assoc pin-n val)))
 
   pcp/PEdgeDetectablePin
   (set-edge! [board pin-n edge buffer]
@@ -105,7 +116,7 @@
   (set-state! [board pin-n val]
     (assert (ok-val? board pin-n val)
             (str "The value " val " is not an acceptable value for pins of type " (current-pin-mode board pin-n)))
-    (swap! pin-state pin-n val)))
+    (swap! pin-state assoc pin-n (cannonical-value val))))
 
 ;; Now we'll flesh out some of the various reading/writing functions
 
@@ -129,7 +140,7 @@
 
 (defn current-pin-mode
   [board pin-n]
-  (get (current-pin-modes board) pin-n))
+  (get (pcp/current-pin-modes board) pin-n))
 
 (defn writeable-pin?
   [board pin-n]
@@ -180,6 +191,6 @@
     (default-config [_]
       (pcp/default-config 100))))
 
-(impl/register-implementation :simulation implementation)
+(impl/register-implementation :simulator implementation)
 
 
