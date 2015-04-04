@@ -51,20 +51,35 @@
   [board f & args]
   (p/update-config board (fn [current-conf] (apply f current-conf args))))
 
-(defn pin-modes
-  "Returns a map of pin numbers to possible modes for the entire board, or the available modes of a specific pin."
-  ; Should add second 1-arity that checks for 
-  ([board]
-   (p/pin-modes board))
-  ([board pin]
-   (get (pin-modes board) pin)))
+
+(defmulti pin-modes
+  "Returns a map of pin numbers to possible modes for the entire board, or the available modes of a specific pin.
+  Arguments should be `[board & [pin-n]]` or `[pin]`."
+  board-dispatch)
+
+(defmethod pin-modes true
+  [board & [pin-n]]
+  (if pin-n
+    (get (pin-modes board) pin-n)
+    (p/pin-modes board)))
+
+(defmethod pin-modes false
+  [pin]
+  (board-apply pin-modes pin))
+
 
 (defn current-pin-modes
-  "Returns a map of pin numbers to possible modes."
-  ([board]
-   (p/current-pin-modes board))
-  ([board pin]
-   (get (current-pin-modes board) pin)))
+  "Returns a map of pin numbers to their corresponding current modes."
+  [board]
+  (p/current-pin-modes board))
+
+(defn current-pin-mode
+  "Return the current mode of a specific pin."
+  ([board pin-n]
+   (get (current-pin-modes board) pin-n))
+  ([pin]
+   (board-apply current-pin-mode pin)))
+
 
 (defn set-default-board!
   "Set the default board implementation"
