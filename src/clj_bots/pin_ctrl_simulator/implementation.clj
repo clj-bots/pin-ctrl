@@ -83,6 +83,9 @@
             "Only :ain pins have raw values")
     (get @pin-state pin-n))
 
+  pcp/PAnalogPin
+  (get 
+
   pcp/PWriteablePin
   (write-value! [board pin-n val]
     (assert (writeable-pin? board pin-n)
