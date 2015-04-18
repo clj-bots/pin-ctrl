@@ -8,7 +8,7 @@
 ;; This stuff really needs to be part of the core library
 
 (def full-available-modes
-  #{:input :output :input-rising :input-falling :input-both :ain :aout :pwm})
+  #{:input :output :ain :aout :pwm})
 
 (def available-modes
   #{:gpio :ain :aout :pwm})
@@ -38,7 +38,7 @@
 (defmulti read-pin*
   "Inner method for reading from a pin; dispatches on pin mode"
   (fn [board pin-n]
-    (get (pcp/current-pin-modes board) pin-n)))
+    (pc/current-pin-modes board) pin-n))
 
 
 ;; In addition to the standard protocol functions, we also need something which let's us set the state of
@@ -75,7 +75,9 @@
   (read-value [board pin-n]
     (read-pin* board pin-n))
 
-  pcp/PAinPin
+  pcp/PAnalogPin
+  (analog-bits [board pin-n]
+    (get-in board [:config :analog-bits pin-n]))
   (read-raw-value [board pin-n]
     (assert (= (current-pin-mode board pin-n) :ain)
             "Only :ain pins have raw values")
