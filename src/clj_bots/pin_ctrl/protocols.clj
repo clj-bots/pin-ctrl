@@ -39,13 +39,16 @@
   (set-mode! [board pin-n mode] "Set the mode of the pin, as long as it's supported by the pin's board."))
 
 (defprotocol PReadablePin
-  (read-value [board pin-n] "Read the binary or analog value of a pin. For analog input values this should be a normalized value between 0 and 1"))
+  (read-value [board pin-n] "Read the binary or analog value of a pin. For analog input values this should be the raw, non-normalized value."))
 
 (defprotocol PAinPin
+(defprotocol PAnalogPin
+  ; XXX This really needs to go away in favor of get-analog-bits
+  (analog-bits [board pin-n]))
   (read-raw-value [board pin-n] "Read the raw analog value of a pin. Maximum value depends on the number of bits ADC."))
 
 (defprotocol PWriteablePin
-  (write-value! [board pin-n val] "Set the binary or analog value of a pin."))
+  (write-value! [board pin-n val] "Set the binary or analog value of a pin; for analog, should be the raw, non-normalized value."))
 
 (defprotocol PEdgeDetectablePin
   "Edge detection allows efficient detection of GPIO state changes (such as from a button press).
