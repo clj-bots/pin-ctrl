@@ -19,15 +19,29 @@
 (defprotocol PPinCtrlImplementation
   "Any implementation the pin-ctrl API must create an object which implements this protocol,
   and register it using the `clj-bots.pin-ctrl.implementation/register-implementation function."
-  (create-board [this config] "Return a new board instance of this implementation.")
+  (create-board [this config] "Return a new board instance of this implementation. This shouldn't do any initializaiton.")
   (default-config [this] "Return the default configuration map (see schema XXX) for this implementation. This is useful for simulation."))
+
+;; changes: pin-modes -> available-modes
+;; current-pin-modes -> pin-modes
+;; added init!
+;; read-raw-value -> analog-bits
+;; read-value : arity taking mode
+;; write-value : arity taking mode
+;; remove-mult
+;; updat set-edge!
+
+
+;; # Board Implementation Protocols
+;;
+;; The following are the protocols for
 
 (defprotocol PBoard
   "Basic board protocol, shared by any board, whether on board or over wire."
-  (pin-modes [this] "Return a map of pin numbers to available pin modes.")
-  (current-pin-modes [this] "Get the current pin mode values.")
-  (get-config [this] "Return the configuration map of the board. For the schema see XXX.")
-  (update-config [this f] "Run the given function on the existing configuration, and return a new board object with the resulting configuration."))
+  (init! [this] "Do any necessary initialization. Not required.")
+  (available-pin-modes [this] "Return a map of pin numbers to available pin modes.")
+  ;; This should now be optional, with the default calling through to the recorded state
+  (pin-modes [this] "Get the current pin mode values. Implementing this method is optional; default behaviour is to track modes and return from there."))
 
 ; Need to have a good way of setting default nullary implementations of these
 (defprotocol POverwireBoard
@@ -39,21 +53,32 @@
   (set-mode! [board pin-n mode] "Set the mode of the pin, as long as it's supported by the pin's board."))
 
 (defprotocol PReadablePin
-  (read-value [board pin-n] "Read the binary or analog value of a pin. For analog input values this should be the raw, non-normalized value."))
+  (read-value [board mode pin-n] "Read the binary or analog value of a pin with given mode. For gpio this should be :high or :low; for ain should be numeric between 0 and 1"))
 
-(defprotocol PAinPin
 (defprotocol PAnalogPin
-  ; XXX This really needs to go away in favor of get-analog-bits
-  (analog-bits [board pin-n]))
-  (read-raw-value [board pin-n] "Read the raw analog value of a pin. Maximum value depends on the number of bits ADC."))
+  (analog-bits [board pin-n] "This function should give the number of bits associated with the given analog pin. Should not reqiure `init!` to have run on the board (for simulation purposes)."))
 
 (defprotocol PWriteablePin
-  (write-value! [board pin-n val] "Set the binary or analog value of a pin; for analog, should be the raw, non-normalized value."))
+  (write-value! [board mode pin-n val] "Set the binary or analog value of a pin; for analog, should be the raw, non-normalized value."))
 
 (defprotocol PEdgeDetectablePin
   "Edge detection allows efficient detection of GPIO state changes (such as from a button press).
-  These changes are exposed to the user via `core.async` channels, which can be created via this
-  protocol. Configuration is done via set-mode!"
-  (set-edge! [board pin-n edge buffer] "Set the direction of the edge detection on a GPIO pin. Should return a channel mult available for tapping. Setting edge to none should close the chan.")
-  (get-edge-mult [board pin-n] "Return the edge channel mult created by `set-edge!`"))
+  These changes are exposed to the user via `core.async` channels."
+  (set-edge! [board pin-n edge ch] "Set the direction of the edge detection on a GPIO input pin. Should place detection messages on channel ch."))
+
+
+;; # Stateful Board Wrapper Protocols
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; The following protocols are not to be used for implementations proper.
+;; They are for implementations of stateful boards, which is orthogonal to an implementation which takes care
+;; of how things run on one type of board vs another.
+;; We may eventually open things up so that stateful board wrappers could
+
+(defprotocol PStatefulPin
+  "This Read and write without having to pass the mode"
+  (stateful-read-value [board pin-n])
+  (stateful-write-value! [board pin-n val])
+  (set-edge-chan! [board pin-n ch])
+  (get-edge-chan [board pin-n]))
 
