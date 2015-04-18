@@ -34,7 +34,8 @@
 
 ;; # Board Implementation Protocols
 ;;
-;; The following are the protocols for
+;; The following are the protocols for board implementations.
+;; Those which are not required will be marked as such.
 
 (defprotocol PBoard
   "Basic board protocol, shared by any board, whether on board or over wire."
