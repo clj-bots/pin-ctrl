@@ -16,7 +16,7 @@
 ;; We can also tease out any implementation specific config and pass that along.
 ;; Should these have to be registered by the implementations?
 
-(defrecord Board [state-atom impl-board]
+(defrecord BoardWrapper [state-atom impl-board]
   pcp/PBoard
   (init! [_] (pcp/init! impl-board))
   (available-pin-modes [_] (pcp/available-pin-modes impl-board))
@@ -25,7 +25,7 @@
     (try
       (pcp/pin-modes impl-board)
       (catch Exception e
-        (:current-pin-modes @state-atom))))
+        (:pin-modes @state-atom))))
 
   pcp/POverwireBoard
   (reset-board! [_] (pcp/reset-board! impl-board))
@@ -34,9 +34,6 @@
   (set-mode! [_ pin-n mode]
     (pcp/set-mode! impl-board pin-n mode)
     (swap! state-atom :assoc pin-n mode))
-
-  pcp/PAnalogPin
-  (analog-bits [_ pin-n] (pcp/analog-bits impl-board pin-n))
 
   pcp/PStatefulPin
   (stateful-read-value [board pin-n] (pcp/read-value impl-board (get (pcp/pin-modes board) pin-n) pin-n))

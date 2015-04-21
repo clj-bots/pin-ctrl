@@ -39,7 +39,7 @@
 
 (defprotocol PBoard
   "Basic board protocol, shared by any board, whether on board or over wire."
-  (init! [this] "Do any necessary initialization. Not required.")
+  (init! [this] "Do any necessary initialization. Not required. Should return the board.")
   (available-pin-modes [this] "Return a map of pin numbers to available pin modes.")
   ;; This should now be optional, with the default calling through to the recorded state
   (pin-modes [this] "Get the current pin mode values. Implementing this method is optional; default behaviour is to track modes and return from there."))
@@ -55,9 +55,6 @@
 
 (defprotocol PReadablePin
   (read-value [board mode pin-n] "Read the binary or analog value of a pin with given mode. For gpio this should be :high or :low; for ain should be numeric between 0 and 1"))
-
-(defprotocol PAnalogPin
-  (analog-bits [board pin-n] "This function should give the number of bits associated with the given analog pin. Should not reqiure `init!` to have run on the board (for simulation purposes)."))
 
 (defprotocol PWriteablePin
   (write-value! [board mode pin-n val] "Set the binary or analog value of a pin; for analog, should be the raw, non-normalized value."))
