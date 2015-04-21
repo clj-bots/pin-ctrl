@@ -2,7 +2,8 @@
   "# Public API for pin-ctrl"
   (:require [clj-bots.pin-ctrl
              [protocols :as p]
-             [implementation :as impl]]
+             [implementation :as impl]
+             [state-wrapper :as sw]]
             [clojure.core.async :as async :refer [>!! <!! >! <! go go-loop chan]]))
 
 
@@ -24,8 +25,6 @@
 ;; pins, and the current mode settings for those pins.
 
 
-(defrecord Board [state-atom impl-board])
-
 (declare board? board-dispatch board-apply chan?)
 
 ;; We start by creating board objects with the `create-board` function, which returns a board object based
@@ -39,20 +38,10 @@
   ([type]
    (create-board type {}))
   ([type config]
-   (Board. (atom {}) (impl/instantiate type config))))
+   (p/init! 
+     (sw/->BoardWrapper (atom {}) (impl/instantiate type config)))))
 
 ;; What follows then are a suite of simple tools for dealing with the boards.
-
-(defn get-config
-  "Get board configuration."
-  [board]
-  (p/get-config board))
-
-(defn update-config
-  "Reset board configuration."
-  [board f & args]
-  (p/update-config board (fn [current-conf] (apply f current-conf args))))
-
 
 (defmulti pin-modes
   "Returns a map of pin numbers to possible modes for the entire board, or the available modes of a specific pin.
@@ -70,15 +59,15 @@
   (board-apply pin-modes pin))
 
 
-(defn current-pin-modes
+(defn pin-modes
   "Returns a map of pin numbers to their corresponding current modes."
   [board]
-  (p/current-pin-modes board))
+  (p/pin-modes board))
 
 (defn current-pin-mode
   "Return the current mode of a specific pin."
   ([board pin-n]
-   (get (current-pin-modes board) pin-n))
+   (get (pin-modes board) pin-n))
   ([pin]
    (board-apply current-pin-mode pin)))
 
@@ -125,21 +114,16 @@
 
 (defn read-value
   "Read a single value from the pin. If an analog input, returns a value between 0 and 1."
-  ([pin] (board-apply p/read-value pin))
-  ([board pin-n] (p/read-value board pin-n)))
-
-(defn read-raw-value
-  "Read a raw unprocessed value from an analog input pin."
-  ([pin] (board-apply p/read-raw-value pin))
-  ([board pin-n] (p/read-raw-value board pin-n)))
+  ([pin] (board-apply p/stateful-read-value pin))
+  ([board pin-n] (p/stateful-read-value board pin-n)))
 
 ;; And last but not least, control functions:
 
 (defn write-value!
   "Write a value to a writable pin. The kind of value supported and what it means is entirely dependent on
   what kind of pin is being used."
-  ([pin val] (board-apply p/write-value! pin val))
-  ([board pin-n val] (p/write-value! board pin-n val)))
+  ([pin val] (board-apply p/stateful-write-value! pin val))
+  ([board pin-n val] (p/stateful-write-value! board pin-n val)))
 
 ;; XXX Should we try to worry about race conditions here? Could make this lower level so read/write messages
 ;; don't have anything inbetween interfere.
@@ -168,16 +152,16 @@
   "Set the edge channel for the specified pin. If there is an existing channel for the pin, it will be
   closed."
   ([board pin-n ch]
-   (sw/set-edge-chan! board pin-n ch))
+   (p/set-edge-chan! board pin-n ch))
   ([pin ch]
-   (board-apply sw/set-edge-chan! pin ch)))
+   (board-apply p/set-edge-chan! pin ch)))
 
 (defn get-edge-chan
   "Get the current edge channel for the specified pin."
   ([board pin-n]
-   (sw/get-edge-chan board pin-n))
+   (p/get-edge-chan board pin-n))
   ([pin]
-   (board-apply sw/get-edge-chan pin)))
+   (board-apply p/get-edge-chan pin)))
 
 (defmulti set-edge!
   "Set the edge direction of a pin. Accepts `:falling`, `:rising`, `:both` and `:none` edges.
@@ -191,12 +175,12 @@
   [board pin-n edge & [ch-or-buffer]]
   (let [current-ch (get-edge-chan board pin-n)
         ch (cond
-             (chan? ch-or-buffer) ch
+             (chan? ch-or-buffer) ch-or-buffer
              ch-or-buffer         (chan ch-or-buffer)
              current-ch           current-ch
              :else                (chan))]
-    (sw/set-edge-chan! board pin-n ch)
-    (pcp/set-edge! board pin-n edge ch)))
+    (p/set-edge-chan! board pin-n ch)
+    (p/set-edge! board pin-n edge ch)))
 
 (defmethod set-edge! false
   [pin edge & [ch-or-buffer]]
@@ -207,12 +191,9 @@
 
 ;; Nothing to see here...
 
-;(defn- board?
-  ;[obj]
-  ;(satisfies? p/PBoard obj))
 (defn- board?
   [obj]
-  (= (type obj) Board))
+  (satisfies? p/PBoard obj))
 
 (defn- board-dispatch
   [x & args] (board? x))
