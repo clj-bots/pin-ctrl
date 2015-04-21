@@ -2883,29 +2883,48 @@ This could be left up to the user, or could be handled in a similar manner to th
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Any implementation the pin-ctrl API must create an object which implements this protocol,
   and register it using the `clj-bots.pin-ctrl.implementation/register-implementation function.</p>
 </td><td class="codes"><pre class="brush: clojure">(defprotocol PPinCtrlImplementation
-  (create-board [this config] &quot;Return a new board instance of this implementation.&quot;)
-  (default-config [this] &quot;Return the default configuration map (see schema XXX) for this implementation. This is useful for simulation.&quot;))</pre></td></tr><tr><td class="docs"><p>Basic board protocol, shared by any board, whether on board or over wire.</p>
+  (create-board [this config] &quot;Return a new board instance of this implementation. This shouldn't do any initializaiton.&quot;)
+  (default-config [this] &quot;Return the default configuration map (see schema XXX) for this implementation. This is useful for simulation.&quot;))</pre></td></tr><tr><td class="docs"><p>changes: pin-modes -> available-modes
+current-pin-modes -> pin-modes
+added init!
+read-raw-value -> analog-bits
+read-value : arity taking mode
+write-value : arity taking mode
+remove-mult
+updat set-edge!</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><h1>Board Implementation Protocols</h1>
+
+<p>The following are the protocols for board implementations.
+Those which are not required will be marked as such.</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Basic board protocol, shared by any board, whether on board or over wire.</p>
 </td><td class="codes"><pre class="brush: clojure">(defprotocol PBoard
-  (pin-modes [this] &quot;Return a map of pin numbers to available pin modes.&quot;)
-  (current-pin-modes [this] &quot;Get the current pin mode values.&quot;)
-  (get-config [this] &quot;Return the configuration map of the board. For the schema see XXX.&quot;)
-  (update-config [this f] &quot;Run the given function on the existing configuration, and return a new board object with the resulting configuration.&quot;))</pre></td></tr><tr><td class="docs"><p>Overwire boards are boards that run over the wire, like Arduino boards over Firmata. This
+  (init! [this] &quot;Do any necessary initialization. Not required. Should return the board.&quot;)
+  (available-pin-modes [this] &quot;Return a map of pin numbers to available pin modes.&quot;)
+  ;; This should now be optional, with the default calling through to the recorded state
+  (pin-modes [this] &quot;Get the current pin mode values. Implementing this method is optional; default behaviour is to track modes and return from there.&quot;))</pre></td></tr><tr><td class="docs"><p>Overwire boards are boards that run over the wire, like Arduino boards over Firmata. This
   protocol is for functions specific to these boards.</p>
 </td><td class="codes"><pre class="brush: clojure">(defprotocol POverwireBoard
   (reset-board! [this] &quot;Overwire boards, such as arduino boards over firmata, can be reset!&quot;))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defprotocol PPinConfigure
   (set-mode! [board pin-n mode] &quot;Set the mode of the pin, as long as it's supported by the pin's board.&quot;))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defprotocol PReadablePin
-  (read-value [board pin-n] &quot;Read the binary or analog value of a pin. For analog input values this should be a normalized value between 0 and 1&quot;))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defprotocol PAinPin
-  (read-raw-value [board pin-n] &quot;Read the raw analog value of a pin. Maximum value depends on the number of bits ADC.&quot;))</pre></td></tr><tr><td class="docs">
+  (read-value [board pin-n mode] &quot;Read the binary or analog value of a pin with given mode. For gpio this should be :high or :low; for ain should be numeric between 0 and 1&quot;))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defprotocol PWriteablePin
-  (write-value! [board pin-n val] &quot;Set the binary or analog value of a pin.&quot;))</pre></td></tr><tr><td class="docs"><p>Edge detection allows efficient detection of GPIO state changes (such as from a button press).
-  These changes are exposed to the user via <code>core.async</code> channels, which can be created via this
-  protocol. Configuration is done via set-mode!</p>
+  (write-value! [board pin-n mode val] &quot;Set the binary or analog value of a pin; for analog, should be the raw, non-normalized value.&quot;))</pre></td></tr><tr><td class="docs"><p>Edge detection allows efficient detection of GPIO state changes (such as from a button press).
+  These changes are exposed to the user via <code>core.async</code> channels.</p>
 </td><td class="codes"><pre class="brush: clojure">(defprotocol PEdgeDetectablePin
-  (set-edge! [board pin-n edge buffer] &quot;Set the direction of the edge detection on a GPIO pin. Should return a channel mult available for tapping. Setting edge to none should close the chan.&quot;)
-  (get-edge-mult [board pin-n] &quot;Return the edge channel mult created by `set-edge!`&quot;))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
+  (set-edge! [board pin-n edge ch] &quot;Set the direction of the edge detection on a GPIO input pin. Should place detection messages on channel ch.&quot;))</pre></td></tr><tr><td class="docs"><h1>Stateful Board Wrapper Protocols</h1>
+
+<p>The following protocols are not to be used for implementations proper.
+They are for implementations of stateful boards, which is orthogonal to an implementation which takes care
+of how things run on one type of board vs another.
+We may eventually open things up so that stateful board wrappers could</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>This Read and write without having to pass the mode</p>
+</td><td class="codes"><pre class="brush: clojure">(defprotocol PStatefulPin
+  (stateful-read-value [board pin-n])
+  (stateful-write-value! [board pin-n val])
+  (set-edge-chan! [board pin-n ch])
+  (get-edge-chan [board pin-n]))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
 SyntaxHighlighter.all();
 
 // hackity hack
