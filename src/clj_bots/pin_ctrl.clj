@@ -30,7 +30,7 @@
 ;; We start by creating board objects with the `create-board` function, which returns a board object based
 ;; on the specified `board-type`, which points towards the implementation key for the device being used (e.g.
 ;; `:rpi`, `:bbb`, `:firmata`, etc.).
-;; The full set of configuration options will be detailed elsewhere soon XXX.
+;; The full set of configuration options will be detailed elsewhere soon (XXX Todo).
 
 (defn create-board
   "Create a new board instance. For documentation on the available options, see the implementation
@@ -41,7 +41,7 @@
    (p/init! 
      (sw/new-board-wrapper (impl/instantiate type config)))))
 
-;; What follows then are a suite of simple tools for dealing with the boards.
+;; What follows then is a suite of simple tools for dealing with the boards.
 
 (defmulti pin-modes
   "Returns a map of pin numbers to possible modes for the entire board, or the available modes of a specific pin.
@@ -110,7 +110,7 @@
   ([pin mode] (board-apply p/set-mode! pin mode))
   ([board pin-n mode] (p/set-mode! board pin-n mode)))
 
-;; Next we have our reader functions.
+;; Next we have our reader function.
 
 (defn read-value
   "Read a single value from the pin. If an analog input, returns a value between 0 and 1."
@@ -127,6 +127,7 @@
 
 ;; XXX Should we try to worry about race conditions here? Could make this lower level so read/write messages
 ;; don't have anything inbetween interfere.
+
 (defn toggle!
   "Toggle a GPIO pin between high and low."
   ([pin] (board-apply toggle! pin))
@@ -135,11 +136,12 @@
          new-val (if (= current-val :low) :high :low)]
      (write-value! board pin-n new-val))))
 
+
 ;; ## Edge detection functionality
 ;;
 ;; Certain applications, such as monitoring of a button push or other input trigger, require consistent
 ;; monitoring of a pin value.
-;; The naive approach here can be quite inefficient.
+;; The naive tight-loop approach here can be quite inefficient.
 ;; Fortunately, GPIO pins typically support edge detection functionality, which allows the system to
 ;; efficiently monitor for changes in pin state, and send those changes as interrupts within the program.
 ;;
