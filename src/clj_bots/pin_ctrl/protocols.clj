@@ -54,10 +54,10 @@
   (set-mode! [board pin-n mode] "Set the mode of the pin, as long as it's supported by the pin's board."))
 
 (defprotocol PReadablePin
-  (read-value [board mode pin-n] "Read the binary or analog value of a pin with given mode. For gpio this should be :high or :low; for ain should be numeric between 0 and 1"))
+  (read-value [board pin-n mode] "Read the binary or analog value of a pin with given mode. For gpio this should be :high or :low; for ain should be numeric between 0 and 1"))
 
 (defprotocol PWriteablePin
-  (write-value! [board mode pin-n val] "Set the binary or analog value of a pin; for analog, should be the raw, non-normalized value."))
+  (write-value! [board pin-n mode val] "Set the binary or analog value of a pin; for analog, should be the raw, non-normalized value."))
 
 (defprotocol PEdgeDetectablePin
   "Edge detection allows efficient detection of GPIO state changes (such as from a button press).
