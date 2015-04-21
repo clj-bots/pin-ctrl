@@ -15,6 +15,9 @@
 ;;
 ;; We can also tease out any implementation specific config and pass that along.
 ;; Should these have to be registered by the implementations?
+;;
+;; This should also be the place we wrap things like validations so implementers don't have to worry about it.
+;; So maybe this should be called something more general than `BoardWrapper`.
 
 (defrecord BoardWrapper [state-atom impl-board]
   pcp/PBoard
