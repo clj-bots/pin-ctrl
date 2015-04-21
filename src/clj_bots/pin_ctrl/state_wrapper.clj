@@ -21,7 +21,9 @@
 
 (defrecord BoardWrapper [state-atom impl-board]
   pcp/PBoard
-  (init! [_] (pcp/init! impl-board))
+  (init! [board]
+    (pcp/init! impl-board)
+    board)
   (available-pin-modes [_] (pcp/available-pin-modes impl-board))
   (pin-modes [_]
       ;; If pin-modes have been implemented, use that implementation
@@ -36,7 +38,7 @@
   pcp/PPinConfigure
   (set-mode! [_ pin-n mode]
     (pcp/set-mode! impl-board pin-n mode)
-    (swap! state-atom :assoc pin-n mode))
+    (swap! state-atom assoc pin-n mode))
 
   pcp/PStatefulPin
   (stateful-read-value [board pin-n] (pcp/read-value impl-board (get (pcp/pin-modes board) pin-n) pin-n))
@@ -52,5 +54,10 @@
   pcp/PEdgeDetectablePin
   (set-edge! [_ pin-n edge ch]
     (pcp/set-edge! impl-board pin-n edge ch)))
+
+
+(defn new-board-wrapper
+  [impl-board]
+  (BoardWrapper. (atom {}) impl-board))
 
 

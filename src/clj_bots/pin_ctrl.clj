@@ -39,7 +39,7 @@
    (create-board type {}))
   ([type config]
    (p/init! 
-     (sw/->BoardWrapper (atom {}) (impl/instantiate type config)))))
+     (sw/new-board-wrapper (impl/instantiate type config)))))
 
 ;; What follows then are a suite of simple tools for dealing with the boards.
 
