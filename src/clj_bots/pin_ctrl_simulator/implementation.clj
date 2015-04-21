@@ -29,6 +29,7 @@
 (defrecord SimBoard
   [pin-state pin-modes edge-channels config]
   pcp/PBoard
+  (init! [b] b)
   (available-pin-modes [_] (:pin-modes config))
   (pin-modes [_] @pin-modes)
 
