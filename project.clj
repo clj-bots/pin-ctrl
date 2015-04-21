@@ -1,6 +1,6 @@
 (defproject clj-bots/pin-ctrl "0.1.0-SNAPSHOT"
-  :description "FIXME: write description"
-  :url "http://example.com/FIXME"
+  :description "Abstraction layer for hardware programming"
+  :url "http://github.com/clj-bots/pin-ctrl"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :plugins [[lein-marginalia "0.8.0"]]
