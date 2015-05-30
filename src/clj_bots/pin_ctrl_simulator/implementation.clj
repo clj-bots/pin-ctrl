@@ -13,7 +13,7 @@
 ;; Here we're going to declare some of the things we'll need in the implementation that we'd rather leave at
 ;; the end of this namespace for logical flow.
 
-(declare current-pin-mode writeable-pin? ok-val?)
+(declare pin-mode writeable-pin? ok-val?)
 
 ;; In addition to the standard protocol functions, we also need something which let's us set the state of
 ;; _input_ input pins for the purposes of simulation, since (for obvious reasons) this is not supported via
@@ -70,12 +70,12 @@
   PSimControl
   (set-state! [board pin-n val]
     (assert (ok-val? board pin-n val)
-            (str "The value " val " is not an acceptable value for pins of type " (current-pin-mode board pin-n)))
+            (str "The value " val " is not an acceptable value for pins of type " (pin-mode board pin-n)))
     (swap! pin-state assoc pin-n)))
 
 ;; Now we'll flesh out some of the various reading/writing functions
 
-(defn pin-mode
+(defn- pin-mode
   [board pin-n]
   (get (pcp/pin-modes board) pin-n))
 
@@ -85,7 +85,7 @@
 
 (defn ok-val?
   [board pin-n val]
-  (case (current-pin-mode board pin-n)
+  (case (pin-mode board pin-n)
     :output (#{0 1 \0 \1 :high :low} val)
     :pwm    #(and (<= 0 %) (>= 1 %))
     false))

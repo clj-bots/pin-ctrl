@@ -41,35 +41,36 @@
    (p/init! 
      (sw/new-board-wrapper (impl/instantiate type config)))))
 
+
 ;; What follows then is a suite of simple tools for dealing with the boards.
 
-(defmulti pin-modes
-  "Returns a map of pin numbers to possible modes for the entire board, or the available modes of a specific pin.
-  Arguments should be `[board & [pin-n]]` or `[pin]`."
-  board-dispatch)
-
-(defmethod pin-modes true
-  [board & [pin-n]]
-  (if pin-n
-    (get (pin-modes board) pin-n)
-    (p/pin-modes board)))
-
-(defmethod pin-modes false
-  [pin]
-  (board-apply pin-modes pin))
-
-
 (defn pin-modes
-  "Returns a map of pin numbers to their corresponding current modes."
+  "Returns a map of pin numbers to possible modes for the entire board, or the available modes of a specific pin."
   [board]
   (p/pin-modes board))
 
-(defn current-pin-mode
-  "Return the current mode of a specific pin."
+(defn pin-mode
+  "Return the current mode of a specific pin, either as a pin object or a board pin-n combo."
   ([board pin-n]
    (get (pin-modes board) pin-n))
   ([pin]
-   (board-apply current-pin-mode pin)))
+   (board-apply pin-mode pin)))
+
+
+(defmulti available-pin-modes 
+  "Returns the available pin modes for a board object (as a map of pin-numbers to modes), or if a pin object or board
+  pin-n combination is passsed, directly returns a collection of the available modes for that pin."
+  board-dispatch)
+
+(defmethod available-pin-modes true
+  ([board]
+   (p/available-pin-modes board))
+  ([board pin-n]
+   (get (available-pin-modes board) pin-n)))
+
+(defmethod available-pin-modes false
+  [pin]
+  (board-apply available-pin-modes pin))
 
 
 (defn set-default-board!

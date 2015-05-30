@@ -11,15 +11,15 @@
 
 ;; First we'll set up some function declarations and multi-method signatures that we'll be using in the implementations.
 
-(declare current-pin-mode writeable-pin? ok-val?)
+(declare writeable-pin? ok-val?)
 
 (defmulti read-pin*
   "Inner method for reading from a pin; dispatches on pin mode"
-  pc/current-pin-mode)
+  pc/pin-mode)
 
 (defmulti unset-mode*
   "Inner method for unsetting a pin mode, in particular for being run before moving to another mode or turned off"
-  pc/current-pin-mode)
+  pc/pin-mode)
 
 (defmulti set-mode*
   "Inner method for setting the mode of a pin on the board"
@@ -28,14 +28,14 @@
 (defmulti write-value*
   "Inner method for writing a value to a pin"
   (fn [board pin-n val]
-    (pc/current-pin-mode board pin-n)))
+    (pc/pin-mode board pin-n)))
 
 
 (defrecord RPiBoard
   [pin-modes edge-channels config]
   pcp/PBoard
-  (pin-modes [_] (:pin-modes config))
-  (current-pin-modes [_] @pin-modes)
+  (available-pin-modes [_] (:pin-modes config))
+  (pin-modes [_] @pin-modes)
   (get-config [_] config)
   (update-config [this f] (update-in this [:config] f))
 
