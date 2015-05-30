@@ -72,6 +72,9 @@
   [pin]
   (board-apply available-pin-modes pin))
 
+;; I'm actually not sure if this is a good idea or not.
+;; Given how much other dispatching there is going on, this would complicate things, and it would also make
+;; basically every function in the api a defmethod, which is a little annoying for docstrings.
 
 (defn set-default-board!
   "Set the default board implementation"
