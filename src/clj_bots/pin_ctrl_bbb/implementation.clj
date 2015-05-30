@@ -6,9 +6,6 @@
             [clojure.java.io :as io]))
 
 
-(declare new-pin)
-
-
 (defrecord Board [pin-mapping config]
   pcp/PBoard
   (pin-modes [_]
@@ -35,10 +32,6 @@
   [config]
   (Board. (get-pin-mappings) config))
 
-
-;(defrecord BBBPin
-  ;[board oin-n mode]
-  ;(
 
 (def implementation
   (reify
