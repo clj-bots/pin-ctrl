@@ -1,0 +1,27 @@
+{:b1
+ ; First, power pins
+ {1  {:type :power
+      :val  :3.3v}
+  17 {:type :power
+      :val  :3.3v}
+  2  {:type :power
+      :val  :5v}
+  4  {:type :power
+      :val  :5v}
+  ; Specifically ground pins
+  6  {:type :power
+      :val  :ground}
+  9  {:type :power
+      :val  :ground}
+  14 {:type :power
+      :val  :ground}
+  20 {:type :power
+      :val  :ground}
+  25 {:type :power
+      :val  :ground}
+
+  ; i2c pins
+  3  {:type      :i2c
+      :gpio-pin  0}
+  5  {:type      :i2c
+      :gpio-pin  1}
