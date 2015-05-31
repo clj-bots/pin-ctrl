@@ -22,15 +22,16 @@
   (create-board [this config] "Return a new board instance of this implementation. This shouldn't do any initializaiton.")
   (default-config [this] "Return the default configuration map (see schema XXX) for this implementation. This is useful for simulation."))
 
-;; changes: pin-modes -> available-modes
-;; current-pin-modes -> pin-modes
-;; added init!
 ;; read-raw-value -> analog-bits
-;; read-value : arity taking mode
-;; write-value : arity taking mode
 ;; remove-mult
 ;; updat set-edge!
-
+;;
+;; finshed:
+;; read-value : arity taking mode
+;; write-value : arity taking mode
+;; added init!
+;; changes: pin-modes -> available-modes
+;; current-pin-modes -> pin-modes
 
 ;; # Board Implementation Protocols
 ;;
@@ -42,7 +43,7 @@
   (init! [this] "Do any necessary initialization. Not required. Should return the board.")
   (available-pin-modes [this] "Return a map of pin numbers to available pin modes.")
   ;; This should now be optional, with the default calling through to the recorded state
-  (pin-modes [this] "Get the current pin mode values. Implementing this method is optional; default behaviour is to track modes and return from there."))
+  (pin-modes [this] "Get the current pin mode values. Implementing this method is optional; default behaviour is to let the state wrapper track modes and return from there. Only implement this method if you want to manually implement functions that directly query the board for a pin's state."))
 
 ; Need to have a good way of setting default nullary implementations of these
 (defprotocol POverwireBoard
