@@ -19,7 +19,7 @@
 
 (defmulti unset-mode*
   "Inner method for unsetting a pin mode, in particular for being run before moving to another mode or turned off"
-  pc/pin-mode)
+  (fn [board pin-n mode] mode))
 
 (defmulti set-mode*
   "Inner method for setting the mode of a pin on the board"
@@ -30,6 +30,8 @@
   (fn [board pin-n mode val] mode))
 
 
+;; Now let's hook these into the actual protocol implementations
+
 (defrecord RPiBoard
   [edge-channels config]
   pcp/PBoard
@@ -37,7 +39,6 @@
 
   pcp/PPinConfigure
   (set-mode! [board pin-n mode]
-    (unset-mode* board pin-n)
     (set-mode* board pin-n mode))
 
   pcp/PReadablePin
@@ -68,5 +69,44 @@
 
   )
 
+
+;; Now time to set up implementations for the multi-methods
+
+(def memoized-open-port
+  (memoize (fn [board pin-n]
+             (let [n (get-in (:pin-modes board) [pin-n :gpio-pin])]
+               (gpio/open-port n)))))
+
+(defmethod read-pin* :input
+  [board pin-n mode]
+  (gpio/read-value (memoized-open-port board pin-n)))
+
+(defmethod read-pin* :output
+  [board pin-n mode]
+  ;; Just defer to the :input method; gpio is generally fine with you trying to read fromj an output pin
+  (read-pin* board pin-n :input))
+
+(defmethod write-value* :output
+  [board pin-n mode val]
+  (gpio/write-value! (memoized-open-port board pin-n) val))
+
+(defn- set-gpio-mode
+  "This helper function takes care of some common logic for gpio :input and :output setting"
+  [direction]
+  (let [p (memoized-open-port board pin-n)]
+    (gpio/export! p)
+    (gpio/set-direction! p direction)))
+
+(defmethod set-mode* :input
+  [board pin-n mode]
+  (set-gpio-mode :in))
+
+(defmethod set-mode* :output
+  [board pin-n mode]
+  (set-gpio-mode :out))
+
+(defmethod unset-mode* :input
+  [board pin-n mode]
+  (gpio/unexport! (memoized-open-port board pin-n)))
 
 
