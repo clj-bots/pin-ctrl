@@ -54,8 +54,8 @@
       (fn [old-chan] (async/close! old-chan) ch)))
 
   pcp/PEdgeDetectablePin
-  (set-edge! [_ pin-n edge ch]
-    (pcp/set-edge! impl-board pin-n edge ch)))
+  (set-edge! [_ pin-n edge f]
+    (pcp/set-edge! impl-board pin-n edge f)))
 
 
 (defn new-board-wrapper

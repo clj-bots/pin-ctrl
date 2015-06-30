@@ -49,25 +49,23 @@
   (write-value! [board pin-n mode val]
     (write-value* board pin-n val))
 
-  ;pcp/PEdgeDetectablePin
-  ;(set-edge! [board pin-n edge buffer]
-    ;(gpio/set-edge! pin-n edge)
-    ;(let [[c m] (or (get @edge-channels pin-n)
-                    ;)]
-      ;(if (= :none edge)
-        ;(do (async/close! c)
-            ;(swap! edge-channels dissoc pin-n))
-        ;(let [p (open-channel-port 
-                  ;c (create-edge-channel pin-n)
-
-
-      ;(do (async/close! (@edge-channels pin-n))
-          ;(swap! edge-channels dissoc pin-n))
-                      ;(let [c (chan buffer)]
-                        ;[c (async/mult c)]))
-            ;(
-
-  )
+  pcp/PEdgeDetectablePin
+  (set-edge! [board pin-n edge f]
+    (let [[chan-port edge-chan]
+          (or (get @edge-channels pin-n)
+              (let [chan-port (gpio/open-channel-port pin-n)]
+                [chan-port (gpio/create-edge-channel chan-port)]))]
+      (if (= :none edge)
+        (do (async/close! edge-chan)
+            (gpio/close! chan-port)
+            (swap! edge-channels dissoc pin-n))
+        (do
+          (gpio/set-direction! chan-port :in)
+          (gpio/set-edge! chan-port edge)
+          (go-loop []
+            (when-let [value (<! edge-chan)]
+              (f value)
+              (recur))))))))
 
 
 ;; Now time to set up implementations for the multi-methods
@@ -92,20 +90,24 @@
 
 (defn- set-gpio-mode
   "This helper function takes care of some common logic for gpio :input and :output setting"
-  [direction]
+  [board pin-n direction]
   (let [p (memoized-open-port board pin-n)]
     (gpio/export! p)
     (gpio/set-direction! p direction)))
 
 (defmethod set-mode* :input
   [board pin-n mode]
-  (set-gpio-mode :in))
+  (set-gpio-mode board pin-n :in))
 
 (defmethod set-mode* :output
   [board pin-n mode]
-  (set-gpio-mode :out))
+  (set-gpio-mode board pin-n :out))
 
 (defmethod unset-mode* :input
+  [board pin-n mode]
+  (gpio/unexport! (memoized-open-port board pin-n)))
+
+(defmethod unset-mode* :output
   [board pin-n mode]
   (gpio/unexport! (memoized-open-port board pin-n)))
 

@@ -61,9 +61,11 @@
   (write-value! [board pin-n mode val] "Set the binary or analog value of a pin; for analog, should be the raw, non-normalized value."))
 
 (defprotocol PEdgeDetectablePin
-  "Edge detection allows efficient detection of GPIO state changes (such as from a button press).
-  These changes are exposed to the user via `core.async` channels."
-  (set-edge! [board pin-n edge ch] "Set the direction of the edge detection on a GPIO input pin. Should place detection messages on channel ch."))
+  "Edge detection allows efficient detection of GPIO state changes (such as from a button press). User recieves this information via callback fn."
+  (set-edge!
+    [board pin-n edge f]
+    "Set the direction of the edge detection on a GPIO input pin. Should call the callback function f with the current state of the pin. Each time the
+    function is called, previous callback functions should no longer be run. State management here is up to user."))
 
 
 ;; # Stateful Board Wrapper Protocols
@@ -77,7 +79,9 @@
 (defprotocol PStatefulPin
   "This Read and write without having to pass the mode"
   (stateful-read-value [board pin-n])
-  (stateful-write-value! [board pin-n val])
+  (stateful-write-value! [board pin-n val]))
+
+(defprotocol PChannelEdgeDetection
   (set-edge-chan! [board pin-n ch])
   (get-edge-chan [board pin-n]))
 

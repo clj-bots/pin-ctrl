@@ -25,7 +25,7 @@
 ;; pins, and the current mode settings for those pins.
 
 
-(declare board? board-dispatch board-apply chan?)
+(declare board? board-dispatch board-apply)
 
 ;; We start by creating board objects with the `create-board` function, which returns a board object based
 ;; on the specified `board-type`, which points towards the implementation key for the device being used (e.g.
@@ -153,44 +153,11 @@
 ;; The usage pattern involves first setting the edge detection mode of the pin, then tapping into a central
 ;; channel and using that tap to convey messages of state changes throughout the app.
 
-
-(defn set-edge-chan!
-  "Set the edge channel for the specified pin. If there is an existing channel for the pin, it will be
-  closed."
-  ([board pin-n ch]
-   (p/set-edge-chan! board pin-n ch))
-  ([pin ch]
-   (board-apply p/set-edge-chan! pin ch)))
-
-(defn get-edge-chan
-  "Get the current edge channel for the specified pin."
-  ([board pin-n]
-   (p/get-edge-chan board pin-n))
-  ([pin]
-   (board-apply p/get-edge-chan pin)))
-
-(defmulti set-edge!
-  "Set the edge direction of a pin. Accepts `:falling`, `:rising`, `:both` and `:none` edges.
-  Args should either be `[pin edge & [ch-or-buffer]]` or `[board pin-n edge & [ch-or-buffer]]`.
-  Edge events will be placed on the specified channel or one that is created with the given buffer.
-  If ch-or-buffer is not specified, an unbeffered chan is returned.
-  The channel can be changed with `set-edge-chan!` and retrieved with `get-edge-chan`."
-  board-dispatch)
-
-(defmethod set-edge! true
-  [board pin-n edge & [ch-or-buffer]]
-  (let [current-ch (get-edge-chan board pin-n)
-        ch (cond
-             (chan? ch-or-buffer) ch-or-buffer
-             ch-or-buffer         (chan ch-or-buffer)
-             current-ch           current-ch
-             :else                (chan))]
-    (p/set-edge-chan! board pin-n ch)
-    (p/set-edge! board pin-n edge ch)))
-
-(defmethod set-edge! false
-  [pin edge & [ch-or-buffer]]
-  (board-apply set-edge! pin edge ch-or-buffer))
+(defn set-edge!
+  ([board pin-n edge f]
+   (p/set-edge! board pin-n edge f))
+  ([pin edge f]
+   (board-apply p/set-edge! pin edge f)))
 
 
 ;; ### Some helper functions for navigating through boards and pins.
@@ -207,9 +174,4 @@
 (defn- board-apply
   [f pin & args]
   (apply f (:board pin) (:pin-n pin) args))
-
-(defn- chan?
-  [c]
-  (and (satisfies? clojure.core.async.impl.protocols/ReadPort c)
-       (satisfies? clojure.core.async.impl.protocols/WritePort c)))
 
