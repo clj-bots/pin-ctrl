@@ -2886,7 +2886,7 @@ underlying protocols.</p>
 Board objects carry with them information about what pins are available, what modes are available for those
 pins, and the current mode settings for those pins.</p>
 </td><td class="codes"></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(declare board? board-dispatch board-apply chan?)</pre></td></tr><tr><td class="docs"><p>We start by creating board objects with the <code>create-board</code> function, which returns a board object based
+</td><td class="codes"><pre class="brush: clojure">(declare board? board-dispatch board-apply)</pre></td></tr><tr><td class="docs"><p>We start by creating board objects with the <code>create-board</code> function, which returns a board object based
 on the specified <code>board-type</code>, which points towards the implementation key for the device being used (e.g.
 <code>:rpi</code>, <code>:bbb</code>, <code>:firmata</code>, etc.).
 The full set of configuration options will be detailed elsewhere soon (XXX Todo).</p>
@@ -2899,26 +2899,29 @@ The full set of configuration options will be detailed elsewhere soon (XXX Todo)
   ([type config]
    (p/init! 
      (sw/new-board-wrapper (impl/instantiate type config)))))</pre></td></tr><tr><td class="docs"><p>What follows then is a suite of simple tools for dealing with the boards.</p>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Returns a map of pin numbers to possible modes for the entire board, or the available modes of a specific pin.
-  Arguments should be <code>[board &amp; [pin-n]]</code> or <code>[pin]</code>.</p>
-</td><td class="codes"><pre class="brush: clojure">(defmulti pin-modes
-  board-dispatch)</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defmethod pin-modes true
-  [board &amp; [pin-n]]
-  (if pin-n
-    (get (pin-modes board) pin-n)
-    (p/pin-modes board)))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defmethod pin-modes false
-  [pin]
-  (board-apply pin-modes pin))</pre></td></tr><tr><td class="docs"><p>Returns a map of pin numbers to their corresponding current modes.</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Returns a map of pin numbers to possible modes for the entire board, or the available modes of a specific pin.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn pin-modes
   [board]
-  (p/pin-modes board))</pre></td></tr><tr><td class="docs"><p>Return the current mode of a specific pin.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn current-pin-mode
+  (p/pin-modes board))</pre></td></tr><tr><td class="docs"><p>Return the current mode of a specific pin, either as a pin object or a board pin-n combo.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn pin-mode
   ([board pin-n]
    (get (pin-modes board) pin-n))
   ([pin]
-   (board-apply current-pin-mode pin)))</pre></td></tr><tr><td class="docs"><p>Set the default board implementation</p>
+   (board-apply pin-mode pin)))</pre></td></tr><tr><td class="docs"><p>Returns the available pin modes for a board object (as a map of pin-numbers to modes), or if a pin object or board
+  pin-n combination is passsed, directly returns a collection of the available modes for that pin.</p>
+</td><td class="codes"><pre class="brush: clojure">(defmulti available-pin-modes 
+  board-dispatch)</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defmethod available-pin-modes true
+  ([board]
+   (p/available-pin-modes board))
+  ([board pin-n]
+   (get (available-pin-modes board) pin-n)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defmethod available-pin-modes false
+  [pin]
+  (board-apply available-pin-modes pin))</pre></td></tr><tr><td class="docs"><p>I'm actually not sure if this is a good idea or not.
+Given how much other dispatching there is going on, this would complicate things, and it would also make
+basically every function in the api a defmethod, which is a little annoying for docstrings.</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Set the default board implementation</p>
 </td><td class="codes"><pre class="brush: clojure">(defn set-default-board!
   [board]
   (println &quot;Not yet implemented&quot;))</pre></td></tr><tr><td class="docs"><h2>Pin functions</h2>
@@ -2971,37 +2974,12 @@ efficiently monitor for changes in pin state, and send those changes as interrup
 <p>This library exposes these interrupts -- naturally -- via core.async channels.
 The usage pattern involves first setting the edge detection mode of the pin, then tapping into a central
 channel and using that tap to convey messages of state changes throughout the app.</p>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Set the edge channel for the specified pin. If there is an existing channel for the pin, it will be
-  closed.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn set-edge-chan!
-  ([board pin-n ch]
-   (p/set-edge-chan! board pin-n ch))
-  ([pin ch]
-   (board-apply p/set-edge-chan! pin ch)))</pre></td></tr><tr><td class="docs"><p>Get the current edge channel for the specified pin.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn get-edge-chan
-  ([board pin-n]
-   (p/get-edge-chan board pin-n))
-  ([pin]
-   (board-apply p/get-edge-chan pin)))</pre></td></tr><tr><td class="docs"><p>Set the edge direction of a pin. Accepts <code>:falling</code>, <code>:rising</code>, <code>:both</code> and <code>:none</code> edges.
-  Args should either be <code>[pin edge &amp; [ch-or-buffer]]</code> or <code>[board pin-n edge &amp; [ch-or-buffer]]</code>.
-  Edge events will be placed on the specified channel or one that is created with the given buffer.
-  If ch-or-buffer is not specified, an unbeffered chan is returned.
-  The channel can be changed with <code>set-edge-chan!</code> and retrieved with <code>get-edge-chan</code>.</p>
-</td><td class="codes"><pre class="brush: clojure">(defmulti set-edge!
-  board-dispatch)</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defmethod set-edge! true
-  [board pin-n edge &amp; [ch-or-buffer]]
-  (let [current-ch (get-edge-chan board pin-n)
-        ch (cond
-             (chan? ch-or-buffer) ch-or-buffer
-             ch-or-buffer         (chan ch-or-buffer)
-             current-ch           current-ch
-             :else                (chan))]
-    (p/set-edge-chan! board pin-n ch)
-    (p/set-edge! board pin-n edge ch)))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defmethod set-edge! false
-  [pin edge &amp; [ch-or-buffer]]
-  (board-apply set-edge! pin edge ch-or-buffer))</pre></td></tr><tr><td class="docs"><h3>Some helper functions for navigating through boards and pins.</h3>
+</td><td class="codes"></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn set-edge!
+  ([board pin-n edge f]
+   (p/set-edge! board pin-n edge f))
+  ([pin edge f]
+   (board-apply p/set-edge! pin edge f)))</pre></td></tr><tr><td class="docs"><h3>Some helper functions for navigating through boards and pins.</h3>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Nothing to see here...</p>
 </td><td class="codes"></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn- board?
@@ -3011,11 +2989,7 @@ channel and using that tap to convey messages of state changes throughout the ap
   [x &amp; args] (board? x))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn- board-apply
   [f pin &amp; args]
-  (apply f (:board pin) (:pin-n pin) args))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn- chan?
-  [c]
-  (and (satisfies? clojure.core.async.impl.protocols/ReadPort c)
-       (satisfies? clojure.core.async.impl.protocols/WritePort c)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
+  (apply f (:board pin) (:pin-n pin) args))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
 SyntaxHighlighter.all();
 
 // hackity hack

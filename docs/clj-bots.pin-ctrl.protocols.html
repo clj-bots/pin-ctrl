@@ -2884,14 +2884,16 @@ This could be left up to the user, or could be handled in a similar manner to th
   and register it using the `clj-bots.pin-ctrl.implementation/register-implementation function.</p>
 </td><td class="codes"><pre class="brush: clojure">(defprotocol PPinCtrlImplementation
   (create-board [this config] &quot;Return a new board instance of this implementation. This shouldn't do any initializaiton.&quot;)
-  (default-config [this] &quot;Return the default configuration map (see schema XXX) for this implementation. This is useful for simulation.&quot;))</pre></td></tr><tr><td class="docs"><p>changes: pin-modes -> available-modes
-current-pin-modes -> pin-modes
-added init!
-read-raw-value -> analog-bits
-read-value : arity taking mode
-write-value : arity taking mode
+  (default-config [this] &quot;Return the default configuration map (see schema XXX) for this implementation. This is useful for simulation.&quot;))</pre></td></tr><tr><td class="docs"><p>read-raw-value -> analog-bits
 remove-mult
 updat set-edge!</p>
+
+<p>finshed:
+read-value : arity taking mode
+write-value : arity taking mode
+added init!
+changes: pin-modes -> available-modes
+current-pin-modes -> pin-modes</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><h1>Board Implementation Protocols</h1>
 
 <p>The following are the protocols for board implementations.
@@ -2901,7 +2903,7 @@ Those which are not required will be marked as such.</p>
   (init! [this] &quot;Do any necessary initialization. Not required. Should return the board.&quot;)
   (available-pin-modes [this] &quot;Return a map of pin numbers to available pin modes.&quot;)
   ;; This should now be optional, with the default calling through to the recorded state
-  (pin-modes [this] &quot;Get the current pin mode values. Implementing this method is optional; default behaviour is to track modes and return from there.&quot;))</pre></td></tr><tr><td class="docs"><p>Overwire boards are boards that run over the wire, like Arduino boards over Firmata. This
+  (pin-modes [this] &quot;Get the current pin mode values. Implementing this method is optional; default behaviour is to let the state wrapper track modes and return from there. Only implement this method if you want to manually implement functions that directly query the board for a pin's state.&quot;))</pre></td></tr><tr><td class="docs"><p>Overwire boards are boards that run over the wire, like Arduino boards over Firmata. This
   protocol is for functions specific to these boards.</p>
 </td><td class="codes"><pre class="brush: clojure">(defprotocol POverwireBoard
   (reset-board! [this] &quot;Overwire boards, such as arduino boards over firmata, can be reset!&quot;))</pre></td></tr><tr><td class="docs">
@@ -2910,10 +2912,12 @@ Those which are not required will be marked as such.</p>
 </td><td class="codes"><pre class="brush: clojure">(defprotocol PReadablePin
   (read-value [board pin-n mode] &quot;Read the binary or analog value of a pin with given mode. For gpio this should be :high or :low; for ain should be numeric between 0 and 1&quot;))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defprotocol PWriteablePin
-  (write-value! [board pin-n mode val] &quot;Set the binary or analog value of a pin; for analog, should be the raw, non-normalized value.&quot;))</pre></td></tr><tr><td class="docs"><p>Edge detection allows efficient detection of GPIO state changes (such as from a button press).
-  These changes are exposed to the user via <code>core.async</code> channels.</p>
+  (write-value! [board pin-n mode val] &quot;Set the binary or analog value of a pin; for analog, should be the raw, non-normalized value.&quot;))</pre></td></tr><tr><td class="docs"><p>Edge detection allows efficient detection of GPIO state changes (such as from a button press). User recieves this information via callback fn.</p>
 </td><td class="codes"><pre class="brush: clojure">(defprotocol PEdgeDetectablePin
-  (set-edge! [board pin-n edge ch] &quot;Set the direction of the edge detection on a GPIO input pin. Should place detection messages on channel ch.&quot;))</pre></td></tr><tr><td class="docs"><h1>Stateful Board Wrapper Protocols</h1>
+  (set-edge!
+    [board pin-n edge f]
+    &quot;Set the direction of the edge detection on a GPIO input pin. Should call the callback function f with the current state of the pin. Each time the
+    function is called, previous callback functions should no longer be run. State management here is up to user.&quot;))</pre></td></tr><tr><td class="docs"><h1>Stateful Board Wrapper Protocols</h1>
 
 <p>The following protocols are not to be used for implementations proper.
 They are for implementations of stateful boards, which is orthogonal to an implementation which takes care
@@ -2922,7 +2926,8 @@ We may eventually open things up so that stateful board wrappers could</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>This Read and write without having to pass the mode</p>
 </td><td class="codes"><pre class="brush: clojure">(defprotocol PStatefulPin
   (stateful-read-value [board pin-n])
-  (stateful-write-value! [board pin-n val])
+  (stateful-write-value! [board pin-n val]))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defprotocol PChannelEdgeDetection
   (set-edge-chan! [board pin-n ch])
   (get-edge-chan [board pin-n]))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
 SyntaxHighlighter.all();

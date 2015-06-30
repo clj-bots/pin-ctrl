@@ -2876,7 +2876,7 @@ net.brehaut.ClojureTools = (function (SH) {
   #{:input :output :ain :pwm})</pre></td></tr><tr><td class="docs"><p>Here we're going to declare some of the things we'll need in the implementation that we'd rather leave at
 the end of this namespace for logical flow.</p>
 </td><td class="codes"></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(declare current-pin-mode writeable-pin? ok-val?)</pre></td></tr><tr><td class="docs"><p>In addition to the standard protocol functions, we also need something which let's us set the state of
+</td><td class="codes"><pre class="brush: clojure">(declare pin-mode writeable-pin? ok-val?)</pre></td></tr><tr><td class="docs"><p>In addition to the standard protocol functions, we also need something which let's us set the state of
 <em>input</em> input pins for the purposes of simulation, since (for obvious reasons) this is not supported via
 the standard protocols.</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Protocol for simulation control functions</p>
@@ -2921,10 +2921,10 @@ the standard protocols.</p>
   PSimControl
   (set-state! [board pin-n val]
     (assert (ok-val? board pin-n val)
-            (str &quot;The value &quot; val &quot; is not an acceptable value for pins of type &quot; (current-pin-mode board pin-n)))
+            (str &quot;The value &quot; val &quot; is not an acceptable value for pins of type &quot; (pin-mode board pin-n)))
     (swap! pin-state assoc pin-n)))</pre></td></tr><tr><td class="docs"><p>Now we'll flesh out some of the various reading/writing functions</p>
 </td><td class="codes"></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn pin-mode
+</td><td class="codes"><pre class="brush: clojure">(defn- pin-mode
   [board pin-n]
   (get (pcp/pin-modes board) pin-n))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn writeable-pin?
@@ -2932,7 +2932,7 @@ the standard protocols.</p>
   (#{:output :pwm} (pin-mode board pin-n)))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn ok-val?
   [board pin-n val]
-  (case (current-pin-mode board pin-n)
+  (case (pin-mode board pin-n)
     :output (#{0 1 \0 \1 :high :low} val)
     :pwm    #(and (&lt;= 0 %) (&gt;= 1 %))
     false))</pre></td></tr><tr><td class="docs"><p>How we create new boards</p>
