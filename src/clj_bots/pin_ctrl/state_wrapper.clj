@@ -45,13 +45,6 @@
     (pcp/read-value impl-board (get (pcp/pin-modes board) pin-n) pin-n))
   (stateful-write-value! [board pin-n val]
     (pcp/write-value! impl-board (get (pcp/pin-modes board) pin-n) pin-n val))
-  (get-edge-chan [board pin-n]
-    (get-in @state-atom [:edge-channels pin-n]))
-  (set-edge-chan! [board pin-n ch]
-    (swap!
-      @state-atom
-      update-in
-      (fn [old-chan] (async/close! old-chan) ch)))
 
   pcp/PEdgeDetectablePin
   (set-edge! [_ pin-n edge f]
